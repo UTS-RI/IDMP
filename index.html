@@ -25,7 +25,7 @@
 
 
   <title>IDMP</title>
-  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <!--link rel="icon" type="image/x-icon" href="static/images/favicon.ico"-->
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
   rel="stylesheet">
 
@@ -101,7 +101,7 @@
 
                   <!-- Github link -->
                   <span class="link-block">
-                    <a href="https://github.com/YOUR REPO HERE" target="_blank"
+                    <a href="https://github.com/UTS-RI/IDMP/" target="_blank"
                     class="external-link button is-normal is-rounded is-dark">
                     <span class="icon">
                       <i class="fab fa-github"></i>
@@ -131,17 +131,14 @@
 
 <!-- Teaser video-->
 <section class="hero teaser">
-  <div class="container is-max-desktop">
+  <div class="vidcontainer">
+    <!-- Paper video. -->
     <div class="hero-body">
-      <img src="static/images/money_shot.png" alt="A gradient field in an Human-Robot collaboration scenario."/>
-      <h2 class="subtitle has-text-centered">
-        Interactive generation of a distance and gradient field in an HRC setting.<br>Top right: The depth image from an Intel Realsense camera.<br>Bottom left: Coloured point cloud map of the scene and one horizontal slice of the field (red/blue means close/far to an object, arrows point towards closest object).  
-      </h2>
+      <iframe src="https://www.youtube.com/embed/R7zQ_HpAWmM" frameborder="0"  allowfullscreen class="video"></iframe>
     </div>
   </div>
 </section>
 <!-- End teaser video -->
-
 <!-- Paper abstract -->
 <section class="section hero is-light">
   <div class="container is-max-desktop">
@@ -159,35 +156,78 @@
 </section>
 <!-- End paper abstract -->
 
+<section class="hero is-small">
+  <div class="hero-body">
+    <h2 class="title is-3"><p style="text-align:center">Datasets</p></h2>
+    <div style="display: flex;">
+      <div class="center">
+        <!-- Arxiv PDF link -->
+        <div class="link-block">
+          <a href="https://arxiv.org/pdf/<ARXIV PAPER ID>.pdf" target="_blank"
+          class="external-link button is-normal is-rounded is-dark">
+          Cow and Lady
+          </a>
+        </div>
+        <img src="static/images/cow_lady_gradients.png" style="width:80%" alt="Avatar woman">
+      </div>
+      <div class="center">
+        <!-- Arxiv PDF link -->
+        <div class="link-block">
+          <a href="https://arxiv.org/pdf/<ARXIV PAPER ID>.pdf" target="_blank"
+          class="external-link button is-normal is-rounded is-dark">
+          Gazebo Dynamic
+          </a>
+        </div>
+        <img src="static/images/cow_lady_gradients.png" style="width:80%" alt="Avatar woman">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-small is-light">
+  <div class="hero-body">
+    <div class="container">
+      <!-- Paper video. -->
+      <h2 class="title is-3">Quantitative Results</h2>
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <div style="display: flex;">
+            <div class="center">
+              <img src="static/images/cow_rmse.png" alt="Avatar woman">
+            </div>
+            <div class="center">
+              <img src="static/images/cow_cov.png" alt="Avatar woman">
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- Image carousel -->
-<section class="hero is-small">
+<!-- <section class="hero is-small">
   <div class="hero-body">
     <div class="container">
       <div id="results-carousel" class="carousel results-carousel">
        <div class="item">
-        <!-- Your image here -->
         <img src="static/images/carousel1.jpg" alt="MY ALT TEXT"/>
         <h2 class="subtitle has-text-centered">
           First image description.
         </h2>
       </div>
       <div class="item">
-        <!-- Your image here -->
         <img src="static/images/carousel2.jpg" alt="MY ALT TEXT"/>
         <h2 class="subtitle has-text-centered">
           Second image description.
         </h2>
       </div>
       <div class="item">
-        <!-- Your image here -->
         <img src="static/images/carousel3.jpg" alt="MY ALT TEXT"/>
         <h2 class="subtitle has-text-centered">
          Third image description.
        </h2>
      </div>
      <div class="item">
-      <!-- Your image here -->
       <img src="static/images/carousel4.jpg" alt="MY ALT TEXT"/>
       <h2 class="subtitle has-text-centered">
         Fourth image description.
@@ -196,57 +236,33 @@
   </div>
 </div>
 </div>
-</section>
+</section> -->
 <!-- End image carousel -->
-
-
-
-
-<!-- Youtube video -->
-<section class="hero is-small is-light">
-  <div class="hero-body">
-    <div class="container">
-      <!-- Paper video. -->
-      <h2 class="title is-3">Video Presentation</h2>
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          
-          <div class="publication-video">
-            <!-- Youtube embed code here -->
-            <iframe src="https://www.youtube.com/embed/JkaxUblCGz0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- End youtube video -->
-
 
 <!-- Video carousel -->
 <section class="hero is-small">
   <div class="hero-body">
     <div class="container">
-      <h2 class="title is-3">Another Carousel</h2>
+      <h2 class="title is-3">Videos</h2>
       <div id="results-carousel" class="carousel results-carousel">
         <div class="item item-video1">
           <video poster="" id="video1" autoplay controls muted loop height="100%">
             <!-- Your video file here -->
-            <source src="static/videos/carousel1.mp4"
+            <source src="static/videos/Cow_&_Lady_conv.mp4"
             type="video/mp4">
           </video>
         </div>
         <div class="item item-video2">
           <video poster="" id="video2" autoplay controls muted loop height="100%">
             <!-- Your video file here -->
-            <source src="static/videos/carousel2.mp4"
+            <source src="static/videos/Rolling_Ball_conv.mp4"
             type="video/mp4">
           </video>
         </div>
         <div class="item item-video3">
           <video poster="" id="video3" autoplay controls muted loop height="100%">\
             <!-- Your video file here -->
-            <source src="static/videos/carousel3.mp4"
+            <source src="static/videos/Motion_Planning_conv.mp4"
             type="video/mp4">
           </video>
         </div>
@@ -262,7 +278,7 @@
 
 
 <!-- Paper poster -->
-<section class="hero is-small is-light">
+<!-- <section class="hero is-small is-light">
   <div class="hero-body">
     <div class="container">
       <h2 class="title">Poster</h2>
@@ -272,7 +288,7 @@
         
       </div>
     </div>
-  </section>
+  </section> -->
 <!--End paper poster -->
 
 

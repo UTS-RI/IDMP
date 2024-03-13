@@ -133,5 +133,45 @@ body {
   font-size: smaller;
 }
 
+/* Split the screen in half */
+.split {
+  width: 50%;
+  position: sticky;
+  overflow-x: hidden;
+}
 
+/* Control the left side */
+.left {
+  left: 0;
+}
 
+/* Control the right side */
+.right {
+  flex:1;
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  /* -ms-transform: translateX(-50%); */
+  /* transform: translateX(-50%); */
+}
+
+.video {
+  position: absolute;
+  top: auto;
+  left: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.vidcontainer {
+  margin: auto;
+  position: relative;
+  width: 70%;
+  height: 0;
+  padding-bottom: 39.37%;
+}
