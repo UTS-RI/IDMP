@@ -145,9 +145,9 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
+        <div class="content">
           <p>
-            Human-robot collaborative applications require scene representations that are kept up-to-date and facilitate safe motions in dynamic scenes. In this letter, we present an interactive distance field mapping and planning (IDMP) framework that handles dynamic objects and collision avoidance through an efficient representation. We define \textit{interactive} mapping and planning as the process of creating and updating the representation of the scene online while simultaneously planning and adapting the robot's actions based on that representation. Given depth sensor data, our framework builds a continuous field that allows to query the distance and gradient to the closest obstacle at any required position in 3D space. The key aspect of this work is an efficient Gaussian Process field that performs incremental updates and implicitly handles dynamic objects with a simple and elegant formulation based on a temporary latent model. In terms of mapping, IDMP is able to fuse point cloud data from single and multiple sensors, query the free space at any spatial resolution, and deal with moving objects without semantics. In terms of planning, IDMP allows seamless integration with gradient-based motion planners facilitating fast re-planning for collision-free navigation. The framework is evaluated on both real and synthetic datasets. A comparison with similar state-of-the-art frameworks shows superior performance when handling dynamic objects and comparable or better performance in the accuracy of the computed distance and gradient field. Finally, we show how the framework can be used for fast motion planning in the presence of moving objects. An accompanying video, code, and datasets are made publicly available.
+            Human-robot collaborative applications require scene representations that are kept up-to-date and facilitate safe motions in dynamic scenes. In this letter, we present an interactive distance field mapping and planning (IDMP) framework that handles dynamic objects and collision avoidance through an efficient representation. We define interactive mapping and planning as the process of creating and updating the representation of the scene online while simultaneously planning and adapting the robot's actions based on that representation. Given depth sensor data, our framework builds a continuous field that allows to query the distance and gradient to the closest obstacle at any required position in 3D space. The key aspect of this work is an efficient Gaussian Process field that performs incremental updates and implicitly handles dynamic objects with a simple and elegant formulation based on a temporary latent model. In terms of mapping, IDMP is able to fuse point cloud data from single and multiple sensors, query the free space at any spatial resolution, and deal with moving objects without semantics. In terms of planning, IDMP allows seamless integration with gradient-based motion planners facilitating fast re-planning for collision-free navigation. The framework is evaluated on both real and synthetic datasets. A comparison with similar state-of-the-art frameworks shows superior performance when handling dynamic objects and comparable or better performance in the accuracy of the computed distance and gradient field. Finally, we show how the framework can be used for fast motion planning in the presence of moving objects. An accompanying video, code, and datasets are made publicly available.
           </p>
         </div>
       </div>
@@ -157,6 +157,23 @@
 <!-- End paper abstract -->
 
 <section class="hero is-small">
+  <div class="hero-body">
+    <div class="container">
+      <!-- Paper video. -->
+      <h2 class="title is-3"><p style="text-align:center">Proposed Framework</p></h2>
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <img src="static/images/framework.png" alt="System diagram of our proposed framework.">
+          <p>
+            Given a pointcloud and the corresponding sensor pose, we propose a framework that first models a temporary latent Frustum Field (blue) using only P<sub>{i}</sub> as training points. All prior training points P<sub>{0,...,i−1}</sub> in the Fused Field (yellow) are then passed to the Frustum Field. Given the sensor pose, the Frustum Field selects from P<sub>{0,...,i−1}</sub> the points that are within the frustum area P<sub>f{0,...,i−1}</sub> and returns the inferred values of d&#770;<sub>f</sub> , ∇d&#770;<sub>f</sub> to the Fused Field. These distances and gradients are used to perform fusion and dynamic update by updating the training points that model the Fused Field. The path planner then queries for d&#770;<sub>o</sub>, ∇d&#770;<sub>o</sub> in order to compute and adapt its motion plans in response to a changing map
+          </p>
+          <img src="static/images/fusion_dynamic.png" width="50%"" alt="Avatar woman">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-small is-light">
   <div class="hero-body">
     <h2 class="title is-3"><p style="text-align:center">Datasets</p></h2>
     <div class="columns is-centered has-text-centered">
@@ -191,7 +208,7 @@
   </div>
 </section>
 
-<section class="hero is-small is-light">
+<section class="hero is-small">
   <div class="hero-body">
     <div class="container">
       <!-- Paper video. -->
@@ -247,7 +264,7 @@
 <!-- End image carousel -->
 
 <!-- Video carousel -->
-<section class="hero is-small">
+<section class="hero is-small is-light">
   <div class="hero-body">
     <div class="container">
       <h2 class="title is-3">Videos</h2>
