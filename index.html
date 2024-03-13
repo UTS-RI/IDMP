@@ -212,9 +212,12 @@
   <div class="hero-body">
     <div class="container">
       <!-- Paper video. -->
-      <h2 class="title is-3">Quantitative Results</h2>
+      <h2 class="title is-3"><p style="text-align:center">Quantitative Results</p></h2>
       <div class="columns is-centered has-text-centered">
         <div class="column is-four-fifths">
+          <p>
+            We compare IDMP to the two state-of-the-art algorithms: <a href="https://github.com/HKUST-Aerial-Robotics/FIESTA">FIESTA</a> and <a href="https://github.com/ethz-asl/voxblox">Voxblox</a>. To compare IDMP’s distance field accuracy to Voxblox and FIESTA, we compute the RMSE for each framework. We vary the spatial: For Voxblox/FIESTA, it corresponds to the voxel size. For IDMP, we query at a regular grid that corresponds to the centre of each voxel. The accuracy for Voxblox and FIESTA decreases with increasing spatial resolution. In contrast, IDMP’s accuracy remains constant. To evaluate the gradients we calculate the mean of the cosine similarities between the computed gradients and the ground truth. Both IDMP and FIESTA perform better than Voxblox for all voxel sizes/resolutions. FIESTA shows slightly better performance than IDMP but also a higher variability.
+          </p>
           <div style="display: flex;">
             <div class="center">
               <img src="static/images/cow_rmse.png" alt="Avatar woman">
@@ -267,7 +270,7 @@
 <section class="hero is-small is-light">
   <div class="hero-body">
     <div class="container">
-      <h2 class="title is-3">Videos</h2>
+      <h2 class="title is-3"><p style="text-align:center">Videos</p></h2>      
       <div id="results-carousel" class="carousel results-carousel">
         <div class="item item-video1">
           <video poster="" id="video1" autoplay controls muted loop height="100%">
@@ -334,7 +337,7 @@
 
           <p>
             This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
-            You are free to borrow the of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+            <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
             Commons Attribution-ShareAlike 4.0 International License</a>.
           </p>
 
