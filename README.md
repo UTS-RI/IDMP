@@ -1,10 +1,10 @@
-# IDMP
-This branch is for the website of the paper.
+# IDMP - Interactive Distance Field Mapping and Planning to Enable Human-Robot Collaboration
+This is the code for IDMP, implementing a gaussian process based distance and gradient field algorithm.
 
+ * [Project Page](https://uts-ri.github.io/IDMP/)
+ * [Paper](https://arxiv.org/abs/2403.09988v1)
+ * [Video](https://www.youtube.com/watch?v=NpbDjCqXyrs)
+ 
+This codebase is implemented using ROS in both C++ and Python.
 
-
-## Acknowledgments
-Parts of this project page were adopted from the [Nerfies](https://nerfies.github.io/) page.
-
-## Website License
-<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+This repository will be updated to open-source our code.
