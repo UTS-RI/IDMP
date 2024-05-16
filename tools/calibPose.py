@@ -40,9 +40,13 @@ class ArucoDetector:
         self.camera_info_sub = rospy.Subscriber("/camera/color/camera_info", CameraInfo, self.camera_info_callback)
         #NOTE: Adjust these two parameters for your printed marker
         self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
-        self.marker_length = 0.180 #width of black square in m
+        self.marker_length = 0.100 #width of black square in m
         self.parameters = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.parameters)
+        self.marker_points = np.array([[-self.marker_length / 2, self.marker_length / 2, 0],
+                              [self.marker_length / 2, self.marker_length / 2, 0],
+                              [self.marker_length / 2, -self.marker_length / 2, 0],
+                              [-self.marker_length / 2, -self.marker_length / 2, 0]], dtype=np.float32)
 
     def camera_info_callback(self, data):
         if self.camera_matrix is None:
@@ -59,13 +63,10 @@ class ArucoDetector:
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
             corners, ids, rejectedImgPoints = self.detector.detectMarkers(gray)
             aruco.drawDetectedMarkers(cv_image, corners, ids)
-            marker_points = np.array([[-self.marker_length / 2, self.marker_length / 2, 0],
-                              [self.marker_length / 2, self.marker_length / 2, 0],
-                              [self.marker_length / 2, -self.marker_length / 2, 0],
-                              [-self.marker_length / 2, -self.marker_length / 2, 0]], dtype=np.float32)
+            
             if np.all(ids is not None):
                 for i in range(0, len(ids)):
-                    _, rvec, tvec = cv2.solvePnP(marker_points, corners[i], self.camera_matrix, self.dist_coeffs, None, None, False, cv2.SOLVEPNP_IPPE_SQUARE)
+                    _, rvec, tvec = cv2.solvePnP(self.marker_points, corners[i], self.camera_matrix, self.dist_coeffs, None, None, False, cv2.SOLVEPNP_IPPE_SQUARE)
                     # rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], self.marker_length, self.camera_matrix, self.dist_coeffs)
                     cv2.drawFrameAxes(cv_image, self.camera_matrix, self.dist_coeffs, rvec, tvec, 0.1)
                     # Construct the transformation matrix
@@ -73,7 +74,7 @@ class ArucoDetector:
                     axis = rvec.flatten() / np.linalg.norm(rvec)
                     angle = np.linalg.norm(rvec)
                     q = quaternion_about_axis(angle, axis)
-                    tvec = tvec[0][0]
+                    tvec = tvec.flatten()
                     print("TF args: {} {} {} {} {} {} {}".format(tvec[0],tvec[1],tvec[2], q[0], q[1], q[2], q[3]))
             cv2.imshow("Live Image",cv_image)
             cv2.waitKey(10)
