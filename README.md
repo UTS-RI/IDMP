@@ -10,7 +10,7 @@ This codebase is implemented using ROS in both C++ and Python.
 
 ## Description
 
-TODO: Maybe write something explaining what IDMP does briefly
+We present an interactive distance field mapping and planning (IDMP) framework that handles dynamic objects and collision avoidance through an efficient representation. Given depth sensor data, our framework builds a continuous field that allows to query the distance and gradient to the closest obstacle at any required position. The key aspect of this work is an efficient Gaussian Process field that performs incremental updates and implicitly handles dynamic objects with a simple and elegant formulation based on a temporary latent model. 
 
 ## Dependencies
 
