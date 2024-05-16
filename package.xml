@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<package>
+  <name>idmp_ros</name>
+  <version>1.0.0</version>
+  <description>ROS Package with IDMP implementation</description>
+  <author>Usama Ali</author>
+
+  <maintainer email="usama.ali@thws.de">Usama</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>GPLv3</license>
+
+  <url type="website">https://uts-ri.github.io/IDMP/</url>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>image_geometry</build_depend>
+  <build_depend>message_filters</build_depend>
+  <build_depend>depth_image_proc</build_depend>
+  <build_depend>roslib</build_depend>
+
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>std_srvs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>tf2</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>depth_image_proc</run_depend>
+  <run_depend>image_geometry</run_depend>
+  <run_depend>message_filters</run_depend>
+  <run_depend>eigen_conversions</run_depend>
+  <run_depend>roslib</run_depend>
+
+
+  <!-- Use test_depend for packages you need only for testing: -->
+  <!--   <test_depend>gtest</test_depend> -->
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+  <!-- Other tools can request additional information be placed here -->
+  </export>
+
+</package>

@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="idmp_ros" type="idmp" name="idmp" />
+</launch>
