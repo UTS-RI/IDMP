@@ -1,24 +1,31 @@
 <launch>
-
-    <arg name="plan" default="false" />
-    <arg name="live" default="true" />
-    <arg name="realsense" default="false" />
     
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
-        <arg name="enable_pointcloud"   value="true"/>
-        <arg name="enable_depth"   value="true"/>
-    </include> 
-    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link" args="0.11515818 0.36441606 1.53394539 0.63145631 -0.65879433  0.28596513  0.29236433 camera_depth_optical_frame base_link" />
-   
-    <rosparam file="$(find gpismap_ros)/config/params_live.yaml" />
-    <node pkg="gpismap_ros" type="gpismap3" name="gpismap_ros" output="screen" respawn="true"/> 
+    <include file="$(find freenect_launch)/launch/freenect.launch">
 
-    <group if="$(arg plan)">
-        <include file="$(find ur5e_moveit_config)/launch/demo.launch" />
-    </group>
-    
-    <group unless="$(arg plan)">
-        <node pkg="rviz" type="rviz" name="rviz" respawn="false" args="-d $(find gpismap_ros)/config/LogGPIS.rviz" output="screen"/>
-    </group>
+        <!-- use device registration -->
+        <arg name="depth_registration"              value="true" /> 
+
+        <arg name="rgb_processing"                  value="true" />
+        <arg name="ir_processing"                   value="false" />
+        <arg name="depth_processing"                value="false" />
+        <arg name="depth_registered_processing"     value="true" />
+        <arg name="disparity_processing"            value="false" />
+        <arg name="disparity_registered_processing" value="false" />
+        <arg name="sw_registered_processing"        value="false" />
+        <arg name="hw_registered_processing"        value="true" />
+
+    </include>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link" args="-0.2133385290730363 0.14280614688783422 0.8494980532925207 0.8319566362101943 -0.06585863654051698 0.01340904480876255 0.5507549300516148 camera_rgb_optical_frame base_link" />
+
+    <node name="pcl_filter" pkg="sensor_filters" type="pointcloud2_filter_chain" output="screen">
+        <rosparam command="load" file="$(find idmp_ros)/config/realsenseFilterChain.yaml" />
+        <remap from="~input" to="/camera/depth_registered/points" />
+        <remap from="~output" to="/camera/depth/color/points_filt" />
+    </node>
+    <!-- IDMP Node -->
+    <rosparam file="$(find idmp_ros)/config/params_realsense.yaml" />
+    <node pkg="idmp_ros" type="idmp" name="idmp" output="screen" respawn="true"/> 
+    <!-- RVIZ -->
+    <node pkg="rviz" type="rviz" name="rviz" respawn="false" args="-d $(find idmp_ros)/config/LogGPIS.rviz" output="screen"/>
     
 </launch>
