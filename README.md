@@ -28,6 +28,7 @@ TODO: Maybe write something explaining what IDMP does briefly
     - [ZED 2i](https://github.com/stereolabs/zed-ros-wrapper)
 - For Python tools:
     - numpy
+    - OpenCV 4.9.0
     - Open3D (for evaluation only)
 
 ## Installation
