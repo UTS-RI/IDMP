@@ -169,7 +169,7 @@ if __name__=="__main__":
     int_marker = InteractiveMarker()
     int_marker.header.frame_id = "base_link"
     int_marker.name = "dist_field_center"
-    int_marker.description = "Movable Distance Field"
+    int_marker.description = "Distance and Gradient to Collision for Safe Human-Robot Interactions"
 
     # create a grey box marker
     box_marker = Marker()
@@ -203,7 +203,7 @@ if __name__=="__main__":
     
     hMove = False if not doubleSlice else False
 
-    vMove = False#(not hMove) if not doubleSlice else False
+    vMove = True#(not hMove) if not doubleSlice else False
 
     wave = False
 
