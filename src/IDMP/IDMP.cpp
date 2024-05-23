@@ -60,12 +60,12 @@ namespace IDMP_ros
     void IDMP::init() {
         pose_tr.resize(3);
         pose_R.resize(9);
-        frustum = new IDMP_ros::Frustum(cam.width, cam.height, cam.cx, cam.cy, cam.fx, cam.fy);
         cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     }
 
-    void IDMP::setParams(IDMPParam par) {
+    void IDMP::setParams(IDMPParam par, int numCams) {
         setting = par;
+        frustum.resize(numCams);
     }
 
     void IDMP::reset() {
@@ -79,66 +79,34 @@ namespace IDMP_ros
         return;
     }
 
-    void IDMP::setCam(camParam c) {
+    void IDMP::setCam(camParam c, int id) {
         cam = c;
         if(cam.fx != 0) {
-            frustum = new IDMP_ros::Frustum(cam.width, cam.height, cam.cx, cam.cy, cam.fx, cam.fy);
+            frustum[id] = IDMP_ros::Frustum(cam.width, cam.height, cam.cx, cam.cy, cam.fx, cam.fy);
         } else {
-            frustum = new IDMP_ros::Frustum(cam.width, cam.height, cam.cam_model);
+            frustum[id] = IDMP_ros::Frustum(cam.width, cam.height, cam.cam_model);
         }
         return;
     }
-
-    pcl::PointCloud<pcl::PointXYZRGB> IDMP::createPcl(float *dataz, int N, std::vector<float> &pose) {
-        pcl::PointCloud<pcl::PointXYZRGB> cld;
-        if (dataz == 0 || N < 1)
-            return cld;
-
-        if (pose.size() != 12)
-            return cld;
-
-        std::copy(pose.begin(), pose.begin() + 3, pose_tr.begin());
-        std::copy(pose.begin() + 3, pose.end(), pose_R.begin());
-        int cols = cam.width / setting.obs_skip; // x
-        int rows = cam.height / setting.obs_skip; // y
-        cld.header.frame_id = "base_link";
-        cld.width = rows*cols;
-        cld.height = 1;
-        cld.points.resize(rows*cols);
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                int u = r*setting.obs_skip;
-                int v = c*setting.obs_skip;
-                int k = u*cam.height+v;
-                int idx = c*rows+r;
-                if ((dataz[k] < DEPTH_MAX_RANGE) && (dataz[k] > DEPTH_MIN_RANGE)){
-                    float x_loc = dataz[k] * (float(u)-cam.cx)/cam.fx;
-                    float y_loc = dataz[k] * (float(v)-cam.cy)/cam.fy;
-                    pcl::PointXYZRGB p;
-                    
-                    p.x = x_loc;//pose_R[0] * x_loc + pose_R[3] * y_loc + pose_R[6] * dataz[k] + pose_tr[0];
-                    p.y = y_loc;//pose_R[1] * x_loc + pose_R[4] * y_loc + pose_R[7] * dataz[k] + pose_tr[1];
-                    p.z = dataz[k];//pose_R[2] * x_loc + pose_R[5] * y_loc + pose_R[8] * dataz[k] + pose_tr[2];
-                    cld.points[idx] = p;
-                }
-            }
-        }
-        return cld;
-    }
     
-    pcl::PointCloud<pcl::PointXYZRGB> IDMP::processFrame(pcl::PointCloud<pcl::PointXYZRGB> &cld, Eigen::Matrix4f pose) {
+    pcl::PointCloud<pcl::PointXYZRGB> IDMP::processFrame(pcl::PointCloud<pcl::PointXYZRGB> &cld, std::vector<Eigen::Matrix4f> camPoses) {
         pcl::PointCloud<pcl::PointXYZRGB> tempCld;
         if(t != 0 && (setting.dynamic || setting.fusion)) {
             IDMP tempGp;
             auto params = setting;
             params.oneshot=true;
-            tempGp.setParams(setting);
-            tempGp.setCam(this->cam);
+            tempGp.setParams(setting, camPoses.size());
             tempGp.update(cld);
-            frustum->calcPlanes(pose.cast<double>());
-            Eigen::Vector3d camNormal = (pose.cast<double>() * Eigen::Vector4d(0, 0, 1,0)).head<3>();
+            for(int i = 0; i<camPoses.size(); i++){
+                if(frustum[i].checkEmpty()){
+                    ROS_ERROR_STREAM("Process Frame called before first camera_info callback!");
+                    return tempCld;
+                }
+                frustum[i].calcPlanes(camPoses[i].cast<double>());
+            }
+            // Eigen::Vector3d camNormal = (pose.cast<double>() * Eigen::Vector4d(0, 0, 1,0)).head<3>();
             IDMP_ros::vecNode3 nodes;
-            t->getAllFrustumNodes(nodes, *frustum);
+            t->getAllFrustumNodes(nodes, frustum);
 
             kd_tree::Static3dTree<point_cloud::PointCloud<point_type::Point3f>> stat_3d_tree;
             if(setting.fusion) {
@@ -166,15 +134,15 @@ namespace IDMP_ros
                     int i8 = i*8;
                     if(setting.dynamic && res[i8]>setting.dyn_tresh) {  //Dynamic
                         //check normal direction
-                        if(camNormal.dot(Eigen::Vector3d(res[i8+1],res[i8+2],res[i8+3])) < 1){
-                            point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
-                            std::vector<size_t> indices;
-                            std::vector<float> squared_distances;
-                            dynamic_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
-                            dynamic_3d_tree.remove(indices[0]);
-                            t->MarkRemoval(nodes[i]);
-                            continue;
-                        }
+                        // if(camNormal.dot(Eigen::Vector3d(res[i8+1],res[i8+2],res[i8+3])) < 1){
+                        point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
+                        std::vector<size_t> indices;
+                        std::vector<float> squared_distances;
+                        dynamic_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
+                        dynamic_3d_tree.remove(indices[0]);
+                        t->MarkRemoval(nodes[i]);
+                        continue;
+                        // }
                     }
                     if(setting.fusion && res[i8] > setting.fus_min && res[i8] < setting.fus_max) { //move point
                         pcl::PointXYZRGB p;
@@ -216,12 +184,6 @@ namespace IDMP_ros
             update(cld);
         }
         return tempCld;
-    }
-
-    bool IDMP::update(float *dataz, int N, std::vector<float> &pose) {
-        auto cld = createPcl(dataz, N, pose);
-        update(cld);
-	    return true;
     }
 
     int IDMP::update(pcl::PointCloud<pcl::PointXYZRGB> &cld) {

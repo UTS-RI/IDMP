@@ -51,17 +51,17 @@ namespace IDMP_ros
     IDMPNode::IDMPNode( ros::NodeHandle& nh )
     : m_nh( nh )
     , m_worldFrameId( "base_link" )
-    , m_it(nh)
     , m_tf2Listener(m_tf2Buffer)
     {
         IDMP_ros::IDMPParam idmpParams;
+        std::string pclTopic;
+        XmlRpc::XmlRpcValue camData; //2d Vector not implemented so we have to parse it ourself yay
         nh.getParam("/idmp_rleng",idmpParams.rleng);
         nh.getParam("/idmp_tree_hl_min",idmpParams.tree_min_hl);
         nh.getParam("/idmp_tree_hl_max",idmpParams.tree_max_hl);
         nh.getParam("/idmp_tree_hl_clust",idmpParams.tree_clust_hl);
         nh.getParam("/idmp_tree_hl_init",idmpParams.tree_init_hl);
         nh.getParam("/idmp_map_scale",idmpParams.map_scale_param);
-        nh.getParam("/idmp_obs_skip",idmpParams.obs_skip);
         nh.getParam("/idmp_dynamic",idmpParams.dynamic);
         nh.getParam("/idmp_fusion",idmpParams.fusion);
         nh.getParam("/idmp_dyn_tresh",idmpParams.dyn_tresh);
@@ -70,70 +70,35 @@ namespace IDMP_ros
         nh.getParam("/idmp_filt_outl",filtOutl);
         nh.getParam("/idmp_pub_pcl",pubPcl);
         nh.getParam("/idmp_world_frame",m_worldFrameId);
-        idmp.setParams(idmpParams);
+        nh.getParam("/idmp_pcl_topic", pclTopic);
+        nh.getParam("/idmp_caminfo_topic", camData);
+        numCams = camData.size();
+        idmp.setParams(idmpParams, numCams);
+        ROS_INFO_STREAM("Starting IDMP with:");
+        ROS_INFO_STREAM("Dynamic:\t"<<idmpParams.dynamic);
+        ROS_INFO_STREAM("Fusion:\t\t"<<idmpParams.fusion);
 
-        bool depthInput, dualCam;
-        nh.getParam("/idmp_depth_input", depthInput);
-        nh.getParam("/idmp_dual_cam", dualCam);
+        
 
-        if(depthInput) {
-            std::string depthTopic, dual_depth_topic;
-            image_transport::TransportHints hints("raw", ros::TransportHints(), nh);
-            nh.getParam("/idmp_depth_topic", depthTopic);
-            m_sub_depth = m_it.subscribeCamera(depthTopic, 1, &IDMPNode::depthImageCallback, this, hints);
-            if(dualCam){
-                nh.getParam("/idmp_dual_depth_topic", dual_depth_topic);
-                m_sub_depth2 = m_it.subscribeCamera(dual_depth_topic, 1, &IDMPNode::depthImageCallback, this, hints);                
-            }
-        } else {
-            std::string pclTopic, camInfoTopic;
-            nh.getParam("/idmp_pcl_topic", pclTopic);
-            nh.getParam("/idmp_caminfo_topic", camInfoTopic);
-            pclSub = m_nh.subscribe<pcl::PointCloud<pcl::PointXYZRGB>>(pclTopic,1, &IDMPNode::pclCB, this);
-            camInfoSub = m_nh.subscribe<sensor_msgs::CameraInfo>(camInfoTopic,1, &IDMPNode::camInfoCB, this);
+        ROS_INFO_STREAM("IDMP input:\t"<<pclTopic);
+        ROS_INFO_STREAM("Number of Cameras:\t"<<numCams);
+        pclSub = m_nh.subscribe<pcl::PointCloud<pcl::PointXYZRGB>>(pclTopic,1, &IDMPNode::pclCB, this);
+        for(int i = 0; i < numCams; i++) {
+            ROS_INFO_STREAM("IDMP Camera "<<i<<":\t"<<camData[i][0]<<"\tregistered to transform:\t"<<camData[i][1]);
+            camInfoSubs.push_back(m_nh.subscribe<sensor_msgs::CameraInfo>(camData[i][0],1, boost::bind(&IDMPNode::camInfoCB, this, _1, i)));
+            camTransforms.push_back(camData[i][1]);
         }
 
         m_pclPub = m_nh.advertise<pcl::PointCloud<pcl::PointXYZRGB>>( "gp_pcl", 0 , true);
         m_query_svc = nh.advertiseService( "query_dist_field", &IDMPNode::queryMap, this );
         m_distanceSlice = nh.advertise<sensor_msgs::PointCloud2>("distances", 0);
     }
-
-    std::vector<float> IDMPNode::fetchRobotTF(std::string frame, ros::Time time)
-    {
-        std::vector<float> pose_vec;
-        tf::Transform tran;
-        geometry_msgs::TransformStamped local_transformStamped;
-        try {
-            local_transformStamped = m_tf2Buffer.lookupTransform(m_worldFrameId, frame, time, ros::Duration(3.0));
-            tf::transformMsgToTF( local_transformStamped.transform, tran );
-            pose_vec.resize(12);
-            pose_vec[0] = tran.getOrigin().x();
-            pose_vec[1] = tran.getOrigin().y();
-            pose_vec[2] = tran.getOrigin().z();
-
-            pose_vec[3] = tran.getBasis()[0][0];
-            pose_vec[4] = tran.getBasis()[1][0];
-            pose_vec[5] = tran.getBasis()[2][0];
-
-            pose_vec[6] = tran.getBasis()[0][1];
-            pose_vec[7] = tran.getBasis()[1][1];
-            pose_vec[8] = tran.getBasis()[2][1];
-
-            pose_vec[9] = tran.getBasis()[0][2];
-            pose_vec[10] = tran.getBasis()[1][2];
-            pose_vec[11] = tran.getBasis()[2][2];
-        }
-        catch (tf2::TransformException &ex) {
-            ROS_WARN("%s", ex.what());
-        }
-        return pose_vec;
-    }
     
-    void IDMPNode::camInfoCB(const sensor_msgs::CameraInfoConstPtr& cam_info){
+    void IDMPNode::camInfoCB(const sensor_msgs::CameraInfoConstPtr& cam_info, const int camId){
         m_model.fromCameraInfo(cam_info);
         IDMP_ros::camParam c( m_model, cam_info->width, cam_info->height);
-        idmp.setCam(c);
-        camInfoSub.shutdown();
+        idmp.setCam(c, camId);
+        camInfoSubs[camId].shutdown();
     }
 
     bool IDMPNode::queryMap(idmp_ros::GetDistanceGradientRequest &req, idmp_ros::GetDistanceGradientResponse &res) {        
@@ -160,43 +125,57 @@ namespace IDMP_ros
         }
         
         // uncomment to publish queried distance field
-        m_distanceSlice.publish(ptsToPcl(queryPoints, &pRes, m_worldFrameId));
+        // m_distanceSlice.publish(ptsToPcl(queryPoints, &pRes, m_worldFrameId));
         return true;
+    }
+
+    Eigen::Matrix4f IDMPNode::lookupTf(const std::string& target_frame, const std::string& source_frame, const ros::Time& time, const ros::Duration timeout) {
+        geometry_msgs::TransformStamped transfMsg;
+        Eigen::Matrix4f transfMat;
+        try {
+            transfMsg = m_tf2Buffer.lookupTransform(target_frame, source_frame, time, timeout);
+        } catch(std::exception &e){
+            ROS_ERROR_STREAM(e.what());
+            return Eigen::Matrix4f::Zero();
+        }
+        pcl_ros::transformAsMatrix(transfMsg.transform, transfMat);
+        return transfMat;
     }
 
     void IDMPNode::pclCB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg) {
         static int cnt = 1;
         static std::vector<double> times;
-        
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr transfCld(new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtCld(new pcl::PointCloud<pcl::PointXYZRGB>);
-        geometry_msgs::TransformStamped cldFrame;
-        try {
-            cldFrame = m_tf2Buffer.lookupTransform(m_worldFrameId, msg->header.frame_id, pcl_conversions::fromPCL(msg->header.stamp), ros::Duration(0.1));
-        } catch(tf2::ExtrapolationException &e){
-            ROS_ERROR_STREAM(e.what());
-            return;
-        } catch(tf2::LookupException &e){
-            ROS_ERROR_STREAM(e.what());
-            return;
-        }
-        Eigen::Matrix4f transf;
+        static pcl::PointCloud<pcl::PointXYZRGB>::Ptr transfCld(new pcl::PointCloud<pcl::PointXYZRGB>);
+        static pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtCld(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-        pcl_ros::transformAsMatrix(cldFrame.transform, transf);
-        
-        pcl_ros::transformPointCloud(*msg,*transfCld, cldFrame.transform);
-        if(filtOutl) {
+        if(msg->header.frame_id != m_worldFrameId) { //transform pointcloud into world frame if not already done
+            geometry_msgs::TransformStamped cldFrame;
+            try {
+                cldFrame = m_tf2Buffer.lookupTransform(m_worldFrameId, msg->header.frame_id, pcl_conversions::fromPCL(msg->header.stamp), ros::Duration(0.1));
+            } catch(std::exception &e){
+                ROS_ERROR_STREAM(e.what());
+                return;
+            } 
+            pcl_ros::transformPointCloud(*msg,*transfCld, cldFrame.transform);
+        } else {
+            *transfCld = *msg;
+        }
+
+        if(filtOutl) { //perform outlier filtering
             pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
             sor.setInputCloud(transfCld);
             sor.setMeanK(20);
             sor.setStddevMulThresh(1.0);
             sor.filter (*filtCld);
         }
+        std::vector<Eigen::Matrix4f> camPoses;
+        for(auto tfFrame:camTransforms) {
+            camPoses.push_back(lookupTf(m_worldFrameId, tfFrame, pcl_conversions::fromPCL(msg->header.stamp), ros::Duration(0.1)));
+        }
         mtx.lock();
-
         auto start = std::chrono::high_resolution_clock::now();
-        if(filtOutl) auto testCld = idmp.processFrame(*filtCld, transf);
-        else auto testCld = idmp.processFrame(*transfCld, transf);
+        if(filtOutl) auto testCld = idmp.processFrame(*filtCld, camPoses);
+        else auto testCld = idmp.processFrame(*transfCld, camPoses);
         times.push_back((std::chrono::high_resolution_clock::now()-start).count()*1E-6);
         std::cout <<cnt<<" "<< std::accumulate(times.begin(), times.end(), 0.0)/times.size() << std::endl << std::flush;
 
@@ -208,124 +187,6 @@ namespace IDMP_ros
         }
         mtx.unlock();
         cnt++;
-    }
-
-    void IDMPNode::depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg,
-                                 const sensor_msgs::CameraInfoConstPtr& info_msg)
-    {
-        static int cnt = 0;
-        cnt++;
-        const bool is_u_short = depth_msg->encoding == sensor_msgs::image_encodings::TYPE_16UC1;
-
-        // Update camera model
-        m_model.fromCameraInfo(info_msg);
-
-        int rows = depth_msg->height;
-        int cols = depth_msg->width;
-
-        IDMP_ros::camParam c( m_model.fx(), m_model.fy(), m_model.cx(), m_model.cy(), cols, rows);
-        idmp.setCam(c);
-
-        //depth message usually does not have the correct frame embedded
-        std::string frame;
-        if(depth_msg->header.frame_id == "camera_1_depth_optical_frame") {
-            frame = "camera_1_depth_frame";
-        } else if(depth_msg->header.frame_id == "camera_1_depth_frame") {
-            frame = "camera_1_depth_frame";
-        } else if(depth_msg->header.frame_id == "camera_2_depth_optical_frame") {
-            frame = "camera_2_depth_frame";
-        } else if(depth_msg->header.frame_id == "camera_2_depth_frame") {
-            frame = "camera_2_depth_frame";
-        } else if(depth_msg->header.frame_id == "camera_depth_optical_frame") {
-            frame = "camera_depth_optical_frame";
-        } else {
-            return;
-        }
-        std::vector<float> pose = fetchRobotTF(frame, depth_msg->header.stamp);
-        float *input_z = 0;
-        cv::Mat gp_img( cols, rows, CV_32FC1 );
-
-        if (is_u_short) {
-            const uint16_t* depth_row_base = reinterpret_cast<const uint16_t*>(&depth_msg->data[0]);
-            input_z = reinterpret_cast<float*>(gp_img.data);
-            int row_step = depth_msg->step / sizeof(uint16_t);
-            #pragma omp parallel for
-            for (int v = 0; v < (int)rows; ++v)
-            {
-                const uint16_t* depth_row = depth_row_base + row_step*v;
-                for (int u = 0; u < (int)cols; ++u )
-                {
-                    float depth = static_cast<float>( depth_row[u] );
-                    // Missing points denoted by NaNs
-                    if (!depth_image_proc::DepthTraits<uint16_t>::valid(depth)) {
-                        depth = 0;
-                    }
-
-                    int k = rows * u + v;       // transposed image
-                    input_z[ k ] = depth_image_proc::DepthTraits<uint16_t>::toMeters( depth );
-                }
-            }
-        }
-        else {
-            cv::Mat debug_image( rows, cols, CV_16UC1 );
-
-            const float* depth_row_base = reinterpret_cast<const float*>(&depth_msg->data[0]);
-            input_z = reinterpret_cast<float*>(gp_img.data);
-            int row_step = depth_msg->step / sizeof(float);
-            #pragma omp parallel for
-            for (int v = 0; v < (int)rows; ++v )
-            {
-                const float* depth_row = depth_row_base + row_step*v;
-                for (int u = 0; u < (int)cols; ++u )
-                {
-                    float depth = depth_row[u];
-
-                    // Missing points denoted by NaNs
-                    if (!depth_image_proc::DepthTraits<float>::valid(depth)) {
-                        depth = 0;
-                    }
-                    //gp_img.at<float>(u, v) = depth;
-                    int k = rows * u + v;       // transposed image
-                    input_z[ k ] = depth;
-                    debug_image.at<uint16_t>(v, u) = //static_cast<uint16_t>( depth * 10000 );
-                            depth_image_proc::DepthTraits<uint16_t>::fromMeters( depth );
-                }
-            }
-
-        }
-
-        int N_in = rows * cols;
-
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr transfCld(new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtCld(new pcl::PointCloud<pcl::PointXYZRGB>);
-        *filtCld = idmp.createPcl( input_z, N_in, pose );
-
-        geometry_msgs::TransformStamped cldFrame;
-        try {
-            cldFrame = m_tf2Buffer.lookupTransform(m_worldFrameId, frame, depth_msg->header.stamp, ros::Duration(1.0));
-        } catch(tf2::ExtrapolationException &e){
-            ROS_ERROR_STREAM(e.what());
-            return;
-        }
-        Eigen::Matrix4f transf;
-        pcl_ros::transformAsMatrix(cldFrame.transform, transf);
-        pcl_ros::transformPointCloud(*filtCld,*transfCld, cldFrame.transform);
-
-        // pcl::VoxelGrid<pcl::PointXYZRGB> filt;
-        // filt.setInputCloud(transfCld);
-        // filt.setLeafSize(filtVox, filtVox, filtVox);
-        // filt.filter(*filtCld);
-
-        mtx.lock();
-        auto start = std::chrono::high_resolution_clock::now();
-        auto testCld = idmp.processFrame(*transfCld, transf);
-        std::cout <<cnt<<" "<< (std::chrono::high_resolution_clock::now()-start).count()*1E-6 << std::endl << std::flush;
-        testCld.header.frame_id = m_worldFrameId;
-        mtx.unlock();
-        std::vector<float> allpts;
-        std::vector<uint8_t> allcols;
-        idmp.getAllPoints(allpts, allcols);
-        m_pclPub.publish(ptsToPcl(allpts, allcols, m_worldFrameId));
     }
 
     pcl::PointCloud<pcl::PointXYZRGB> IDMPNode::ptsToPcl(std::vector<float> &pts, std::vector<uint8_t> &col, std::string frame){

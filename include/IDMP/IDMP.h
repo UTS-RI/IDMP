@@ -116,7 +116,7 @@ namespace IDMP_ros {
 
         OcTree *t;
         std::unordered_set<OcTree *> activeSet;
-        IDMP_ros::Frustum *frustum;
+        std::vector<IDMP_ros::Frustum> frustum;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
         kd_tree::Dynamic3dTree<point_cloud::PointCloud<point_type::Point3f>>dynamic_3d_tree;
         kd_tree::Static3dTree<point_cloud::PointCloud<point_type::Point3f>>static_3d_tree;
@@ -135,11 +135,11 @@ namespace IDMP_ros {
 
         IDMP(IDMPParam par, camParam c);
     
-        void setParams(IDMPParam par);
+        void setParams(IDMPParam par, int numCams);
 
         pcl::PointCloud<pcl::PointXYZRGB> createPcl(float *dataz, int N, std::vector<float> &pose);
 
-        pcl::PointCloud<pcl::PointXYZRGB> processFrame(pcl::PointCloud<pcl::PointXYZRGB> &cld, Eigen::Matrix4f pose);
+        pcl::PointCloud<pcl::PointXYZRGB> processFrame(pcl::PointCloud<pcl::PointXYZRGB> &cld, std::vector<Eigen::Matrix4f> camPoses);
 
         ~IDMP();
 
@@ -158,7 +158,7 @@ namespace IDMP_ros {
 
         bool test( float *x, int dim, int leng, double *res );
 
-        void setCam(camParam c);
+        void setCam(camParam c, int id);
 
         inline float getOcTreeResolution( )
         { return t->getMinHalfLength() * 2; }

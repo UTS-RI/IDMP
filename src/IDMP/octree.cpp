@@ -845,13 +845,16 @@ namespace IDMP_ros
         return;
     }
 
-    void OcTree::getAllFrustumNodes(std::vector <std::shared_ptr<Node3>> &nodes,  IDMP_ros::Frustum &frustum) {
+    void OcTree::getAllFrustumNodes(std::vector <std::shared_ptr<Node3>> &nodes,  const std::vector<IDMP_ros::Frustum> frustum) {
         if (IsEmptyLeaf())
             return;
 
         if (IsLeaf()) {
-            if(frustum.checkPoint(Eigen::Vector3d(node->getPosX(), node->getPosY(), node->getPosZ()))) {
-                nodes.push_back(node);
+            for(auto f:frustum){
+                if(f.checkPoint(Eigen::Vector3d(node->getPosX(), node->getPosY(), node->getPosZ()))) {
+                    nodes.push_back(node);
+                    break;
+                }
             }
             return;
         }

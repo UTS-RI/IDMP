@@ -48,60 +48,44 @@ namespace IDMP_ros
         IDMPNode( ros::NodeHandle& nh );
 
     private:
-        void depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg,
-                           const sensor_msgs::CameraInfoConstPtr& info_msg);
+        void camInfoCB(const sensor_msgs::CameraInfoConstPtr& info_msg, const int camId);
         void pclCB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg);
-        void camInfoCB(const sensor_msgs::CameraInfoConstPtr& info_msg);
-
-        std::vector<float> fetchRobotTF(std::string frame,  ros::Time time);
+        bool queryMap(idmp_ros::GetDistanceGradientRequest &req, idmp_ros::GetDistanceGradientResponse &res);
 
         sensor_msgs::PointCloud2 ptsToPcl(std::vector<float> &pts, std::vector<double> *queryRes, std::string frame);
-
         pcl::PointCloud<pcl::PointXYZRGB> ptsToPcl(std::vector<float> &pts, std::vector<uint8_t> &col, std::string frame);
+        Eigen::Matrix4f lookupTf(const std::string& target_frame, const std::string& source_frame, const ros::Time& time, const ros::Duration timeout);
 
-        bool queryMap(idmp_ros::GetDistanceGradientRequest &req,
-                      idmp_ros::GetDistanceGradientResponse &res);
 
     private:
         ros::NodeHandle m_nh;
-
-        image_transport::CameraSubscriber m_sub_depth;
-        image_transport::CameraSubscriber m_sub_depth2;
 
         ros::Publisher m_pclPub;
         ros::Publisher m_distanceSlice;
 
         ros::Subscriber pclSub;
         ros::Subscriber camInfoSub;
+        std::vector<ros::Subscriber> camInfoSubs;
         std::string m_worldFrameId; // the map frame
 
-        tf::Transform m_robotTF;
+        int numCams;
+        std::vector<std::string> camTransforms;
 
-        image_transport::ImageTransport m_it;
         image_geometry::PinholeCameraModel m_model;
 
         ros::ServiceServer m_query_svc;
-        ros::ServiceServer m_reset_svc;
 
         tf2_ros::Buffer m_tf2Buffer;
         tf2_ros::TransformListener m_tf2Listener;
 
         IDMP_ros::IDMP idmp;
 
-        std::vector<float> x_samples, y_samples, z_samples;
         std::vector<double> pRes;
-        std::vector<float> xtest;
-        std::vector<float> pose_ptr;
         bool filtOutl;
         bool pubPcl;
-
-        std::vector<float> qP_group;
-
-        visualization_msgs::Marker m_mesh_msg;
         std::mutex mtx;
-
     };
 
 }
 
-#endif //SRC_PILE_2D_MAPPER_H
+#endif

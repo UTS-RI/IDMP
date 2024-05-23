@@ -58,6 +58,10 @@ namespace IDMP_ros
 
     class Frustum {
     public:
+        Frustum() {
+            empty = true;
+        }
+
         Frustum(double width, double height, double cx, double cy, double fx, double fy){
             Eigen::Vector3d frustumPoints[8];
             frustumPoints[0] = Eigen::Vector3d((double(width)-cx)/fx, (double(height/2)-cy)/fy, 1); //right center
@@ -72,6 +76,7 @@ namespace IDMP_ros
                 int i2=i*2;
                 origPlanes[i] = IDMP_ros::Plane(frustumPoints[i2].cross(frustumPoints[i2+1]).normalized(),frustumPoints[i2]);
             }
+            empty = false;
         }
 
         Frustum(double width, double height, image_geometry::PinholeCameraModel camMod){
@@ -97,9 +102,11 @@ namespace IDMP_ros
                 int i2=i*2;
                 origPlanes[i] = IDMP_ros::Plane(frustumPoints[i2].cross(frustumPoints[i2+1]).normalized(),frustumPoints[i2]);
             }
+            empty = false;
         }
 
         void calcPlanes(Eigen::Matrix4d pose) {
+            if(empty) return;
             for(int i = 0; i<4; i++) {
                 planes[i]=origPlanes[i];
                 planes[i].transform(pose);
@@ -107,15 +114,20 @@ namespace IDMP_ros
         }
 
         bool checkPoint(Eigen::Vector3d point) {
+            if(empty) return false;
             for(int i = 0; i<4; i++) {
                 double dist = planes[i].dist(point);
                 if(dist > 0.05)return false;
             }
             return true;
         }
+
+        inline bool checkEmpty() {return empty;}
+
     private:
     IDMP_ros::Plane origPlanes[4];
-    IDMP_ros::Plane planes[4];    
+    IDMP_ros::Plane planes[4];
+    bool empty;
     };
 
     class AABB3 {
@@ -439,7 +451,7 @@ namespace IDMP_ros
         Point3<float> getSEB() { return boundary.getSEB(); }
 
         void getAllChildrenNonEmptyNodes(std::vector<std::shared_ptr<Node3> > &nodes);
-        void getAllFrustumNodes(std::vector<std::shared_ptr<Node3> > &nodes, IDMP_ros::Frustum &frustum);
+        void getAllFrustumNodes(std::vector<std::shared_ptr<Node3> > &nodes, const std::vector<IDMP_ros::Frustum> frustum);
 
 
         void updateCount();
