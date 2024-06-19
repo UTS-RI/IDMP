@@ -104,11 +104,11 @@ namespace IDMP_ros
     bool IDMPNode::queryMap(idmp_ros::GetDistanceGradientRequest &req, idmp_ros::GetDistanceGradientResponse &res) {        
         std::vector<float> queryPoints(req.points.begin(), req.points.end());
         int N_pts = queryPoints.size()/3;
-        pRes.clear();
-        pRes.resize( N_pts * 8, 0 );
+        std::vector<double> resVec;
+        resVec.resize( N_pts * 8, 0 );
         auto start = std::chrono::high_resolution_clock::now();
         mtx.lock();
-        idmp.test( queryPoints.data(), 3, N_pts, pRes.data() );
+        idmp.test( queryPoints.data(), 3, N_pts, resVec.data() );
         mtx.unlock();
         std::cout << "Query: "<< (std::chrono::high_resolution_clock::now()-start).count()*1E-6 << std::endl << std::flush;
         res.stamp = ros::Time::now();
@@ -118,14 +118,14 @@ namespace IDMP_ros
         // #pragma omp parallel for
         for (int index = 0; index < N_pts; index++) {
             int k8 = index * 8;
-            res.distances[index] = static_cast<double>(pRes[k8]);
-            res.gradients[(index*3)] = static_cast<double>(pRes[k8 + 1]);
-            res.gradients[(index*3)+1] = static_cast<double>(pRes[k8 + 2]);
-            res.gradients[(index*3)+2] = static_cast<double>(pRes[k8 + 3]);
+            res.distances[index] = static_cast<double>(resVec[k8]);
+            res.gradients[(index*3)] = static_cast<double>(resVec[k8 + 1]);
+            res.gradients[(index*3)+1] = static_cast<double>(resVec[k8 + 2]);
+            res.gradients[(index*3)+2] = static_cast<double>(resVec[k8 + 3]);
         }
         
         // uncomment to publish queried distance field
-        // m_distanceSlice.publish(ptsToPcl(queryPoints, &pRes, m_worldFrameId));
+        // m_distanceSlice.publish(ptsToPcl(queryPoints, &resVec, m_worldFrameId));
         return true;
     }
 
