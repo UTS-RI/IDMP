@@ -1,0 +1,50 @@
+input_queue_size: 1
+output_queue_size: 1
+cloud_filter_chain:
+  - name: CropBoxFilter
+    type: point_cloud2_filters/CropBoxFilterPointCloud2
+    params:          
+      active: True
+      input_frame: "base_link"
+      output_frame: "zed2i_left_camera_optical_frame"
+      keep_organized: True
+      negative: False
+      min_x: -0.5
+      max_x: 1
+      min_y: -1
+      max_y: 1
+      min_z: -0.5
+      max_z: 2.5
+  - name: VoxelGridFilter
+    type: point_cloud2_filters/VoxelGridFilterPointCloud2
+    params:
+      active: true
+      input_frame: "base_link"
+      output_frame: "zed2i_left_camera_optical_frame"
+      leaf_size_x: 0.005
+      leaf_size_y: 0.005
+      leaf_size_z: 0.005
+      min_points_per_voxel: 1
+      downsample_all_data: True
+      filter_field_name: "x"
+      filter_limit_min: -5
+      filter_limit_max: 5
+      negative: False
+  - name: robot_body_filter_containment
+    type: robot_body_filter/RobotBodyFilterPointCloud2
+    params:
+      sensor/min_distance: 0.05
+      sensor/max_distance: 4
+      sensor/point_by_point: false
+      frames/fixed: base_link
+      frames/sensor: zed2i_left_camera_optical_frame
+      frames/filtering: zed2i_left_camera_optical_frame
+      frames/output: zed2i_left_camera_optical_frame
+      body_model/inflation/scale: 1.3
+      body_model/inflation/padding: 0.1
+      body_model/robot_description_param: robot_description
+      filter/do_clipping: false
+      filter/do_contains_test: true
+      filter/do_shadow_test: false
+      transforms/timeout/unreachable: 0.3
+      transforms/require_all_reachable: false

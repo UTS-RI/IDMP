@@ -23,7 +23,10 @@
         <arg name="disparity_processing"            value="false" />
         <arg name="disparity_registered_processing" value="false" /> -->
     </include>
-    <node pkg="tf2_ros" type="static_transform_publisher" name="k4a_link" args="-0.18408162 -0.59068343 1.85925519 -0.00450478 0.9378159 -0.34707718 0.0042993 rgb_camera_link base_link" />
+    <include file="$(find aruco-tools)/launch/publishTags.launch">
+      <arg name="yaml_file"         value="$(find aruco-tools)/config/poses.yaml" />
+    </include>
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="k4a_link" args="-0.18408162 -0.59068343 1.85925519 -0.00450478 0.9378159 -0.34707718 0.0042993 rgb_camera_link base_link" /> -->
     <node name="robot_filter" pkg="sensor_filters" type="pointcloud2_filter_chain" launch-prefix="bash -c 'sleep 1; $0 $@' " output="screen">
         <rosparam command="load" file="$(find idmp_ros)/config/kinectFilterChain.yaml" />
         <remap from="~input" to="/points2" />

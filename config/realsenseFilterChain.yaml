@@ -9,24 +9,24 @@ cloud_filter_chain:
       output_frame: "base_link"
       keep_organized: True
       negative: False
-      min_x: -1
-      max_x: 0.65
-      min_y: -0.5
-      max_y: 2
-      min_z: -0.2
-      max_z: 2
+      min_x: -0.5
+      max_x: 1
+      min_y: -1
+      max_y: 1
+      min_z: -0.5
+      max_z: 2.5
 
   - name: VoxelGridFilter
     type: point_cloud2_filters/VoxelGridFilterPointCloud2
     params:
       active: true
       input_frame: "base_link"
-      output_frame: "camera_depth_optical_frame"
-      leaf_size_x: 0.075
-      leaf_size_y: 0.075
-      leaf_size_z: 0.075
-      min_points_per_voxel: 5
-      downsample_all_data: False
+      output_frame: "base_link"
+      leaf_size_x: 0.01
+      leaf_size_y: 0.01
+      leaf_size_z: 0.01
+      min_points_per_voxel: 0
+      downsample_all_data: True
       filter_field_name: "x"
       filter_limit_min: -5
       filter_limit_max: 5

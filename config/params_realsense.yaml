@@ -15,10 +15,10 @@ idmp_dual_depth_topic: ""
 idmp_world_frame: "base_link"
 idmp_pcl_topic: "/camera/depth/color/points_filt"
 idmp_caminfo_topic: 
-  - ["/camera/depth/camera_info", "camera_depth_optical_frame"]
+  - ["/camera/color/camera_info", "camera_depth_optical_frame"]
 idmp_dynamic: True
 idmp_fusion: False
 
-idmp_dyn_tresh: 0.08
+idmp_dyn_tresh: 0.1
 idmp_fus_min: 0.0005
 idmp_fus_max: 0.01

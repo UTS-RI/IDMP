@@ -13,7 +13,7 @@
         <arg name="enable_depth"        value="true"/>
     </include> 
     <!-- Transform from camera to base. CHANGE HERE AFTER POSE CALIBRATION! args are: x y z qx qy qz qw -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link" args="0.19240873793349833 0.6484802776820079 2.118238851272752 0.8362710607211282 0.008825442476127647 -0.009167628415244874 0.5481685681929417 camera_depth_optical_frame base_link" />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_link" args="0.19240873793349833 0.6484802776820079 2.118238851272752 0.8362710607211282 0.008825442476127647 -0.009167628415244874 0.5481685681929417 camera_depth_optical_frame base_link" /> -->
     <!-- PointCloud filters. requires: ros-noetic-sensor-filters and ros-noetic-point-cloud2-filters. Install those with sudo apt install! -->
     <node name="pcl_filter" pkg="sensor_filters" type="pointcloud2_filter_chain" output="screen">
         <rosparam command="load" file="$(find idmp_ros)/config/realsenseFilterChain.yaml" />
@@ -24,6 +24,6 @@
     <rosparam file="$(find idmp_ros)/config/params_realsense.yaml" />
     <node pkg="idmp_ros" type="idmp" name="idmp" output="screen" respawn="true"/> 
     <!-- RVIZ -->
-    <node pkg="rviz" type="rviz" name="rviz" respawn="false" args="-d $(find idmp_ros)/config/LogGPIS.rviz" output="screen"/>
+    <!-- <node pkg="rviz" type="rviz" name="rviz" respawn="false" args="-d $(find idmp_ros)/config/LogGPIS.rviz" output="screen"/> -->
     
 </launch>
