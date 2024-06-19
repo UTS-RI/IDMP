@@ -1,17 +1,20 @@
 input_queue_size: 1
 output_queue_size: 1
 cloud_filter_chain:
-  - name: PassThroughFilter
-    type: point_cloud2_filters/PassThroughFilterPointCloud2
+  - name: CropBoxFilter
+    type: point_cloud2_filters/CropBoxFilterPointCloud2
     params:
       active: True
       input_frame: "base_link"
-      output_frame: "rgb_camera_link"
+      output_frame: "base_link"
       keep_organized: True
       negative: False
-      filter_field_name: "y"
-      filter_limit_min: -0.5
-      filter_limit_max: 2
+      min_x: -1
+      max_x: 0.3
+      min_y: 0
+      max_y: 2
+      min_z: -0.2
+      max_z: 2
   - name: VoxelGridFilter
     type: point_cloud2_filters/VoxelGridFilterPointCloud2
     params:
