@@ -111,5 +111,6 @@ catkin_install_python(PROGRAMS tools/queryTool.py
                         tools/eval/runTests.py
                         tools/eval/evalTest.py
                         tools/calibPose.py
+                        tools/robotProximityViz.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

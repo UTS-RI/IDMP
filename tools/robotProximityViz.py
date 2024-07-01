@@ -41,6 +41,7 @@ import matplotlib
 from scipy.spatial.transform import Rotation as R
 import time
 from tf import transformations
+import tf
 
 matplotlib.use("Qt5Agg")
 
@@ -156,12 +157,13 @@ def create_arrow(scale, start, end, idnum, color=None):
     return m
 
 def get_robot_joints_positions():
+        global tf_listener
         joint_positions = []
         joint_names = ["tcp_link"]  # Replace with your joint names
         
         for joint in joint_names:
             try:
-                (trans, rot) = self.tf_listener.lookupTransform('/base_link', joint, rospy.Time(0))
+                (trans, rot) = tf_listener.lookupTransform('/base_link', joint, rospy.Time(0))
                 joint_positions.append(trans)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn("Could not transform from /base_link to {}".format(joint))
@@ -176,7 +178,7 @@ if __name__=="__main__":
     marker_pub = rospy.Publisher("grad_array", MarkerArray, queue_size=0)
     # rospy.wait_for_service('query_dist_field')
     query = rospy.ServiceProxy('query_dist_field', GetDistanceGradient)
-
+    tf_listener = tf.TransformListener()
     
     queryGrid = []
     step = 0.05
