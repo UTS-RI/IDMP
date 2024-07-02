@@ -154,89 +154,109 @@ namespace IDMP_ros {
         val = res(0);
     
         int n = x.cols();
-        int m = xt.cols();    
-        #if 0
-        float a = scale;
+        int m = xt.cols();
+#ifndef RevertingKernel
+        val = -(inv_scale)*log(abs(res(0)));
+#else
+        val = sqrt(abs(-2*inv_scale*log(abs(res(0)))));
+#endif
 
-        EMatrixX Grx = EMatrixX::Zero(n,m);
-        EMatrixX Gry = EMatrixX::Zero(n,m);
-        EMatrixX Grz = EMatrixX::Zero(n,m);
-    
-        for (int k=0;k<n;k++){
-            for (int j=0;j<m;j++){
-                float r = (x.col(k)-xt.col(j)).norm();
-                Grx(k, j) = kf1(r,x(0, k) - xt(0, j),a);
-                Gry(k, j) = kf1(r,x(1, k) - xt(1, j),a);
-                Grz(k, j) = kf1(r,x(2, k) - xt(2, j),a);
+        if(val > 0.05) {
+            float a = scale;
+
+            EMatrixX Grx = EMatrixX::Zero(n,m);
+            EMatrixX Gry = EMatrixX::Zero(n,m);
+            EMatrixX Grz = EMatrixX::Zero(n,m);
+        
+            for (int k=0;k<n;k++){
+                for (int j=0;j<m;j++){
+                    float r = (x.col(k)-xt.col(j)).norm();
+                    Grx(k, j) = kf1(r,x(0, k) - xt(0, j),a);
+                    Gry(k, j) = kf1(r,x(1, k) - xt(1, j),a);
+                    Grz(k, j) = kf1(r,x(2, k) - xt(2, j),a);
+                }
             }
-        }
-    
-        EVectorX gradx = Grx.transpose()*alpha;
-        EVectorX grady = Gry.transpose()*alpha;
-        EVectorX gradz = Grz.transpose()*alpha;
+        
+            EVectorX gradx = Grx.transpose()*alpha;
+            EVectorX grady = Gry.transpose()*alpha;
+            EVectorX gradz = Grz.transpose()*alpha;
 
-        grad[0] = gradx(0);  
-        grad[1] = grady(0);
-        grad[2] = gradz(0);
-        #else
-        double a = scale;
-        EMatrixX Hrxx = EMatrixX::Zero(n,m);
-        EMatrixX Hrxy = EMatrixX::Zero(n,m);
-        EMatrixX Hrxz = EMatrixX::Zero(n,m);
-        EMatrixX Hryx = EMatrixX::Zero(n,m);
-        EMatrixX Hryy = EMatrixX::Zero(n,m);
-        EMatrixX Hryz = EMatrixX::Zero(n,m);
-        EMatrixX Hrzx = EMatrixX::Zero(n,m);
-        EMatrixX Hrzy = EMatrixX::Zero(n,m);
-        EMatrixX Hrzz = EMatrixX::Zero(n,m);
+            grad[0] = gradx(0);  
+            grad[1] = grady(0);
+            grad[2] = gradz(0);
+        } else {
+            double a = scale;
+            EMatrixX Hrxx = EMatrixX::Zero(n,m);
+            EMatrixX Hrxy = EMatrixX::Zero(n,m);
+            EMatrixX Hrxz = EMatrixX::Zero(n,m);
+            EMatrixX Hryx = EMatrixX::Zero(n,m);
+            EMatrixX Hryy = EMatrixX::Zero(n,m);
+            EMatrixX Hryz = EMatrixX::Zero(n,m);
+            EMatrixX Hrzx = EMatrixX::Zero(n,m);
+            EMatrixX Hrzy = EMatrixX::Zero(n,m);
+            EMatrixX Hrzz = EMatrixX::Zero(n,m);
 
-        EMatrixX normHessian = EMatrixX::Zero(3,3);
+            EMatrixX normHessian = EMatrixX::Zero(3,3);
 
-        for (int k=0;k<n;k++){
-            for (int j=0;j<m;j++){
-                double r = (x.col(k)-xt.col(j)).norm();
-                Hrxx(k, j) = kf2(r,x(0,k)-xt(0,j),x(0,k)-xt(0,j),1.0,a);
-                Hrxy(k, j) = kf2(r,x(0,k)-xt(0,j),x(1,k)-xt(1,j),0.0,a);
-                Hrxz(k, j) = kf2(r,x(0,k)-xt(0,j),x(2,k)-xt(2,j),0.0,a);
-                Hryx(k, j) = Hrxy(k, j);
-                Hryy(k, j) = kf2(r,x(1,k)-xt(1,j),x(1,k)-xt(1,j),1.0,a);
-                Hryz(k, j) = kf2(r,x(1,k)-xt(1,j),x(2,k)-xt(2,j),0.0,a);
-                Hrzx(k, j) = Hrxz(k, j);
-                Hrzy(k, j) = Hryz(k, j);
-                Hrzz(k, j) = kf2(r,x(2,k)-xt(2,j),x(2,k)-xt(2,j),1.0,a);
+            for (int k=0;k<n;k++){
+                for (int j=0;j<m;j++){
+                    double r = (x.col(k)-xt.col(j)).norm();
+                    Hrxx(k, j) = kf2(r,x(0,k)-xt(0,j),x(0,k)-xt(0,j),1.0,a);
+                    Hrxy(k, j) = kf2(r,x(0,k)-xt(0,j),x(1,k)-xt(1,j),0.0,a);
+                    Hrxz(k, j) = kf2(r,x(0,k)-xt(0,j),x(2,k)-xt(2,j),0.0,a);
+                    Hryx(k, j) = Hrxy(k, j);
+                    Hryy(k, j) = kf2(r,x(1,k)-xt(1,j),x(1,k)-xt(1,j),1.0,a);
+                    Hryz(k, j) = kf2(r,x(1,k)-xt(1,j),x(2,k)-xt(2,j),0.0,a);
+                    Hrzx(k, j) = Hrxz(k, j);
+                    Hrzy(k, j) = Hryz(k, j);
+                    Hrzz(k, j) = kf2(r,x(2,k)-xt(2,j),x(2,k)-xt(2,j),1.0,a);
+                }
             }
+
+            EVectorX hesxx = Hrxx.transpose()*alpha;
+            EVectorX hesxy = Hrxy.transpose()*alpha;
+            EVectorX hesxz = Hrxz.transpose()*alpha;
+            EVectorX hesyx = Hryx.transpose()*alpha;
+            EVectorX hesyy = Hryy.transpose()*alpha;
+            EVectorX hesyz = Hryz.transpose()*alpha;
+            EVectorX heszx = Hrzx.transpose()*alpha;
+            EVectorX heszy = Hrzy.transpose()*alpha;
+            EVectorX heszz = Hrzz.transpose()*alpha;
+
+            normHessian(0,0) = hesxx(0);
+            normHessian(0,1) = hesxy(0);
+            normHessian(0,2) = hesxz(0);
+            normHessian(1,0) = hesyx(0);
+            normHessian(1,1) = hesyy(0);
+            normHessian(1,2) = hesyz(0);
+            normHessian(2,0) = heszx(0);
+            normHessian(2,1) = heszy(0);
+            normHessian(2,2) = heszz(0);
+
+            Eigen::EigenSolver<EMatrixX> es(normHessian);
+            EVectorX evalue = es.eigenvalues().real();
+            EMatrixX evector = es.eigenvectors().real();
+            EVectorX::Index index;
+            double minv = evalue.minCoeff(&index);
+            auto normalV = evector.col(index);
+            grad[0] = normalV(0);  
+            grad[1] = normalV(1);
+            grad[2] = normalV(2);
         }
-
-        EVectorX hesxx = Hrxx.transpose()*alpha;
-        EVectorX hesxy = Hrxy.transpose()*alpha;
-        EVectorX hesxz = Hrxz.transpose()*alpha;
-        EVectorX hesyx = Hryx.transpose()*alpha;
-        EVectorX hesyy = Hryy.transpose()*alpha;
-        EVectorX hesyz = Hryz.transpose()*alpha;
-        EVectorX heszx = Hrzx.transpose()*alpha;
-        EVectorX heszy = Hrzy.transpose()*alpha;
-        EVectorX heszz = Hrzz.transpose()*alpha;
-
-        normHessian(0,0) = hesxx(0);
-        normHessian(0,1) = hesxy(0);
-        normHessian(0,2) = hesxz(0);
-        normHessian(1,0) = hesyx(0);
-        normHessian(1,1) = hesyy(0);
-        normHessian(1,2) = hesyz(0);
-        normHessian(2,0) = heszx(0);
-        normHessian(2,1) = heszy(0);
-        normHessian(2,2) = heszz(0);
-
-        Eigen::EigenSolver<EMatrixX> es(normHessian);
-        EVectorX evalue = es.eigenvalues().real();
-        EMatrixX evector = es.eigenvectors().real();
-        EVectorX::Index index;
-        double minv = evalue.minCoeff(&index);
-        auto normalV = evector.col(index);
-        grad[0] = normalV(0);  
-        grad[1] = normalV(1);
-        grad[2] = normalV(2);
-        #endif
+#ifndef RevertingKernel
+        double gradLen = -1 * sqrt(pow(grad[0], 2) + pow(grad[1], 2) + pow(grad[2], 2)); 
+#else
+        double gradLen = sqrt(pow(grad[0], 2) + pow(grad[1], 2) + pow(grad[2], 2)); 
+#endif
+        if(gradLen != 0){
+            grad[0]/=gradLen;
+            grad[1]/=gradLen;
+            grad[2]/=gradLen;
+        } else {
+            grad[0]=0;
+            grad[1]=0;
+            grad[2]=0;
+        }  
         return;
     }
 }

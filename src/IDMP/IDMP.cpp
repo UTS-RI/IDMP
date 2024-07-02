@@ -364,28 +364,6 @@ namespace IDMP_ros
                     gp->testSinglePoint_new(xt, res[k8], &res[k8 + 1], &res[k8 + 4]);
                 }
             }
-            #ifndef RevertingKernel
-            float invert_a = 1/setting.map_scale_param;
-            res[k8] = -(invert_a)*log(abs(res[k8]));
-            //normalize gradients
-            double gradLen = -1 * sqrt(pow(res[k8+1], 2) + pow(res[k8+2], 2) + pow(res[k8+3], 2)); 
-            #else
-            float invert_a = 1/sqrt(setting.map_scale_param);
-            double oldres = res[k8];
-            res[k8] = sqrt(abs(-2*invert_a*invert_a*log(abs(res[k8]))));
-            //normalize gradients
-            double gradLen = sqrt(pow(res[k8+1], 2) + pow(res[k8+2], 2) + pow(res[k8+3], 2)); 
-            #endif
-
-            if(gradLen != 0){
-                res[k8 + 1]/=gradLen;
-                res[k8 + 2]/=gradLen;
-                res[k8 + 3]/=gradLen;
-            } else {
-                res[k8 + 1]=0;
-                res[k8 + 2]=0;
-                res[k8 + 3]=0;
-            }
         }
     }
 

@@ -45,19 +45,22 @@ namespace IDMP_ros
         EVectorX alpha;
         std::vector<float> gradflag;
 
-        float scale;
+        double scale;
+        double inv_scale;
+        double inv_sqrt_scale;
         
-        float three_over_scale;
         bool trained;
 
     public:
-        gp() : scale(DEFAULT_MAP_SCALE_PARAM),
-                   three_over_scale(3.0 / (DEFAULT_MAP_SCALE_PARAM * DEFAULT_MAP_SCALE_PARAM)),
-                   trained(false) {}
+        gp() :  scale(DEFAULT_MAP_SCALE_PARAM),
+                inv_scale(1 / DEFAULT_MAP_SCALE_PARAM),
+                inv_sqrt_scale(1/sqrt(DEFAULT_MAP_SCALE_PARAM)),
+                trained(false) {}
 
-        gp(float s) : scale(s),
-                                   three_over_scale(3.0 / (s * s)),
-                                   trained(false) {}
+        gp(float s) :   scale(s),
+                        inv_scale(1 / s),
+                        inv_sqrt_scale(1/sqrt(s)),
+                        trained(false) {}
 
         void reset();
 
