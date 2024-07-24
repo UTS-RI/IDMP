@@ -27,7 +27,7 @@ import yaml
 from datetime import datetime, timedelta
 import numpy as np
 
-evalPath = "/home/usama/Workspace/ros/utsWs/eval/"
+evalPath = "/home/usama/Workspace/ros/utsWs/evalRebuttal/"
 
 def readConfig(file):
     configDocument = yaml.emit(yaml.parse(file))
@@ -51,19 +51,17 @@ def writeConfig(config,file):
     file.truncate(0)
     file.write("".join(fileData))
 
-def runIDMP(testType):
+def runIDMP(testType, queryRes = None):
     FNULL = open(os.devnull,'w')
     roscore = subprocess.Popen("roscore", stdout=FNULL)
     time.sleep(3)
     
-    idmp = subprocess.Popen(["roslaunch", "--no-summary", "--skip-log-check", "idmp_ros", "run.launch"], stdout=subprocess.PIPE, universal_newlines=True)
+    idmp = subprocess.Popen(["roslaunch", "--no-summary", "--skip-log-check", "idmp_ros", "runCow.launch"], stdout=subprocess.PIPE, universal_newlines=True)
     tf = subprocess.Popen(["rosrun", "idmp_ros", "datasetTFPublisher.py"])
-    rviz = subprocess.Popen(["rosrun", "rviz", "rviz", "-d", "/home/usama/Workspace/ros/utsWs/src/LogGPIS_ROS/config/LogGPIS.rviz"], stdout=FNULL)
+    info = subprocess.Popen(["rosrun", "idmp_ros", "cowCamInfoPub.py"])
+    rviz = subprocess.Popen(["rosrun", "rviz", "rviz", "-d", "/home/usama/Workspace/ros/utsWs/src/IDMP/config/LogGPIS.rviz"], stdout=FNULL)
     time.sleep(1)
-    if(getConfig("idmp_depth_input")):
-        bag = subprocess.Popen(["rosbag","play","/home/usama/Workspace/ros/utsWs/bags/gazeboBall.bag"])
-    else:
-        bag = subprocess.Popen(["rosbag","play","/home/usama/Workspace/ros/utsWs/bags/ladyCow.bag", "--clock"])
+    bag = subprocess.Popen(["rosbag","play","/home/usama/Workspace/ros/utsWs/bags/ladyCow.bag","--clock"])
     bag.wait()
     print("Bag finished...")
     time.sleep(1)
@@ -71,11 +69,16 @@ def runIDMP(testType):
     dirPath = evalPath+"/"+"_".join(testType.split("_")[:-1])
     evalScript = subprocess.Popen(["rosrun", "idmp_ros", "evalTest.py", dirPath, testType])
     evalScript.wait()
-    for i in [0.05,0.1,0.15,0.2,0.25]:
-        dumpScript = subprocess.Popen(["rosrun", "idmp_ros", "dumpField.py", dirPath, testType,str(i),"-2","2","-2","0.8","0.2","1.5"])
-        dumpScript.wait()
-
+    if queryRes is None:
+        print("Dumping field")
+        for i in [0.05,0.1,0.15,0.2,0.25]:
+            dumpScript = subprocess.Popen(["rosrun", "idmp_ros", "dumpField.py", dirPath, testType,str(i),"-2","2","-2","0.8","0.2","1.5"])
+            dumpScript.wait()
+    # else:
+    #     dumpScript = subprocess.Popen(["rosrun", "idmp_ros", "dumpField.py", dirPath, testType,str(queryRes),"-2","2","-2","0.8","0.2","1.5"])
+    #     dumpScript.wait()
     tf.kill()
+    info.kill()
     idmp.terminate()
     text = idmp.communicate()[0]
     roscore.terminate()
@@ -94,14 +97,14 @@ def runIDMP(testType):
 
 
 def setConfig(field,data):
-    configFile = open("/home/usama/Workspace/ros/utsWs/src/LogGPIS_ROS/config/params.yaml","r+")
+    configFile = open("/home/usama/Workspace/ros/utsWs/src/IDMP/config/params.yaml","r+")
     configData = readConfig(configFile)
     configData[field] = data
     writeConfig(configData,configFile)
     configFile.close()
 
 def getConfig(field):
-    configFile = open("/home/usama/Workspace/ros/utsWs/src/LogGPIS_ROS/config/params.yaml","r+")
+    configFile = open("/home/usama/Workspace/ros/utsWs/src/IDMP/config/params.yaml","r+")
     configData = readConfig(configFile)
     return configData[field]
 
@@ -113,13 +116,17 @@ def runTest(param, vals, prefix = ""):
     if(not os.path.isdir(testPath)):
         os.mkdir(testPath)
         repFile = open(testPath+"/report.csv","a")
-        repFile.write("parameter,rmse,frames,avgTime\n")
+        repFile.write("parameter,rmse,coserr,frames,avgTime\n")
         repFile.close()
     
     for v in vals:
         print("Running "+param+" with "+str(v))
         setConfig(param, v)
-        f,t = runIDMP(param+prefix+"_"+str(v))
+        setConfig("idmp_tree_hl_max", v*(2**7))
+        setConfig("idmp_tree_hl_clust", 2*v)
+        setConfig("idmp_tree_hl_init", v*(2**6))
+        
+        f,t = runIDMP(param+prefix+"_"+str(v), v)
         repFile = open(testPath+"/report.csv","a")
         repFile.write(","+str(f)+","+str(t)+"\n")
         repFile.close()
@@ -145,11 +152,12 @@ if __name__ == "__main__":
     # runTest("idmp_fusion", np.array([False, True]))
     # runTest("idmp_tree_hl_clust", np.array([0.025,0.05,0.1,0.2]))
     # runTest("idmp_tree_hl_min", np.array([0.0125,0.025,0.05]))
+    runTest("idmp_tree_hl_min", np.array([0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25]))
 
 
     # runTest("idmp_map_scale", np.array([5,10,15,20,25,30,35])**2)
 
     # runTest("idmp_fus_min", np.array([0.0018,0.0015,0.001,0.0005, 0.0003]))
     #Benchmark
-    benchmark()
+    # benchmark()
     

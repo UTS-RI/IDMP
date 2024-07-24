@@ -1,0 +1,9 @@
+<launch>
+    <node name="pcl_filter" pkg="sensor_filters" type="pointcloud2_filter_chain" output="screen">
+        <rosparam command="load" file="$(find idmp_ros)/config/realsenseFilterChain.yaml" />
+        <remap from="~input" to="/camera/depth_registered/points" />
+        <remap from="~output" to="/camera/depth_registered/points_filt" />
+    </node>
+    <rosparam file="$(find idmp_ros)/config/params.yaml" />
+    <node pkg="idmp_ros" type="idmp" name="idmp" output="screen"/>    
+</launch>

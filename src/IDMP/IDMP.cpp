@@ -94,91 +94,92 @@ namespace IDMP_ros
         if(t != 0 && (setting.dynamic || setting.fusion)) {
             IDMP tempGp;
             auto params = setting;
-            params.oneshot=true;
-            tempGp.setParams(setting, camPoses.size());
-            tempGp.update(cld);
-            for(int i = 0; i<camPoses.size(); i++){
-                if(frustum[i].checkEmpty()){
-                    ROS_ERROR_STREAM("Process Frame called before first camera_info callback!");
-                    return tempCld;
-                }
-                frustum[i].calcPlanes(camPoses[i].cast<double>());
-            }
-            // Eigen::Vector3d camNormal = (pose.cast<double>() * Eigen::Vector4d(0, 0, 1,0)).head<3>();
-            IDMP_ros::vecNode3 nodes;
-            t->getAllFrustumNodes(nodes, frustum);
-
-            kd_tree::Static3dTree<point_cloud::PointCloud<point_type::Point3f>> stat_3d_tree;
-            if(setting.fusion) {
-                // std::vector<point_type::Point3f> cldPts(cld.points.size());
-                for(int i = 0; i<cld.points.size();i++){
-                    stat_3d_tree.add(point_type::Point3f(cld.points[i].x,cld.points[i].y,cld.points[i].z));
-                }
-                stat_3d_tree.build();
-            }
-            if(nodes.size() > 0) {
-                std::vector<float> testPts(nodes.size()*3);
-                #pragma omp parallel for
-                for(int i = 0; i < nodes.size(); i++){
-                    int i3=i*3;
-                    testPts[i3] = nodes[i]->getPosX();
-                    testPts[i3+1] = nodes[i]->getPosY();
-                    testPts[i3+2] = nodes[i]->getPosZ();
-                }
-
-                std::vector<double> res(nodes.size()*8);
-                tempGp.test(testPts.data(), 3, nodes.size(), res.data());
-                std::vector<bool> cldDel(cld.points.size(),false);
-                #pragma omp parallel for
-                for(int i = 0; i<nodes.size(); i++){
-                    int i8 = i*8;
-                    if(setting.dynamic && res[i8]>setting.dyn_tresh) {  //Dynamic
-                        //check normal direction
-                        // if(camNormal.dot(Eigen::Vector3d(res[i8+1],res[i8+2],res[i8+3])) < 1){
-                        point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
-                        std::vector<size_t> indices;
-                        std::vector<float> squared_distances;
-                        dynamic_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
-                        dynamic_3d_tree.remove(indices[0]);
-                        t->MarkRemoval(nodes[i]);
-                        continue;
-                        // }
+            params.oneshot = true;
+            tempGp.setParams(params, camPoses.size());
+            if(tempGp.update(cld) != 0) {
+                for(int i = 0; i<camPoses.size(); i++){
+                    if(frustum[i].checkEmpty()){
+                        ROS_ERROR_STREAM("Process Frame called before first camera_info callback!");
+                        return tempCld;
                     }
-                    if(setting.fusion && res[i8] > setting.fus_min && res[i8] < setting.fus_max) { //move point
-                        pcl::PointXYZRGB p;
-                        p.x = nodes[i]->getPosX() - res[i8]*res[i8+1];
-                        p.y = nodes[i]->getPosY() - res[i8]*res[i8+2];
-                        p.z = nodes[i]->getPosZ() - res[i8]*res[i8+3];
-                        p.r = nodes[i]->getColorR();
-                        p.g = nodes[i]->getColorG();
-                        p.b = nodes[i]->getColorB();
+                    frustum[i].calcPlanes(camPoses[i].cast<double>());
+                }
+                // Eigen::Vector3d camNormal = (pose.cast<double>() * Eigen::Vector4d(0, 0, 1,0)).head<3>();
+                IDMP_ros::vecNode3 nodes;
+                t->getAllFrustumNodes(nodes, frustum);
 
-                        point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
-                        std::vector<size_t> indices;
-                        std::vector<float> squared_distances;
-                        dynamic_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
-                        dynamic_3d_tree.remove(indices[0]);
-                        t->MarkRemoval(nodes[i]);
-                        indices.clear();
-                        squared_distances.clear();
-                        stat_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
-                        cld.points[indices[0]].x = nodes[i]->getPosX() - res[i8]*0.5*res[i8+1];
-                        cld.points[indices[0]].y = nodes[i]->getPosY() - res[i8]*0.5*res[i8+2];
-                        cld.points[indices[0]].z = nodes[i]->getPosZ() - res[i8]*0.5*res[i8+3];
-                    } else if(setting.fusion && res[i8] < setting.fus_min){
-                        // point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
-                        // std::vector<size_t> indices;
-                        // std::vector<float> squared_distances;
-                        // stat_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
-                        // cldDel[indices[0]] = true;
+                kd_tree::Static3dTree<point_cloud::PointCloud<point_type::Point3f>> stat_3d_tree;
+                if(setting.fusion) {
+                    // std::vector<point_type::Point3f> cldPts(cld.points.size());
+                    for(int i = 0; i<cld.points.size();i++){
+                        stat_3d_tree.add(point_type::Point3f(cld.points[i].x,cld.points[i].y,cld.points[i].z));
+                    }
+                    stat_3d_tree.build();
+                }
+                if(nodes.size() > 0) {
+                    std::vector<float> testPts(nodes.size()*3);
+                    #pragma omp parallel for
+                    for(int i = 0; i < nodes.size(); i++){
+                        int i3=i*3;
+                        testPts[i3] = nodes[i]->getPosX();
+                        testPts[i3+1] = nodes[i]->getPosY();
+                        testPts[i3+2] = nodes[i]->getPosZ();
+                    }
+
+                    std::vector<double> res(nodes.size()*8);
+                    tempGp.test(testPts.data(), 3, nodes.size(), res.data());
+                    std::vector<bool> cldDel(cld.points.size(),false);
+                    #pragma omp parallel for
+                    for(int i = 0; i<nodes.size(); i++){
+                        int i8 = i*8;
+                        if(setting.dynamic && res[i8]>setting.dyn_tresh) {  //Dynamic
+                            //check normal direction
+                            // if(camNormal.dot(Eigen::Vector3d(res[i8+1],res[i8+2],res[i8+3])) < 1){
+                            point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
+                            std::vector<size_t> indices;
+                            std::vector<float> squared_distances;
+                            dynamic_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
+                            dynamic_3d_tree.remove(indices[0]);
+                            t->MarkRemoval(nodes[i]);
+                            continue;
+                            // }
+                        }
+                        if(setting.fusion && res[i8] > setting.fus_min && res[i8] < setting.fus_max) { //move point
+                            pcl::PointXYZRGB p;
+                            p.x = nodes[i]->getPosX() - res[i8]*res[i8+1];
+                            p.y = nodes[i]->getPosY() - res[i8]*res[i8+2];
+                            p.z = nodes[i]->getPosZ() - res[i8]*res[i8+3];
+                            p.r = nodes[i]->getColorR();
+                            p.g = nodes[i]->getColorG();
+                            p.b = nodes[i]->getColorB();
+
+                            point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
+                            std::vector<size_t> indices;
+                            std::vector<float> squared_distances;
+                            dynamic_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
+                            dynamic_3d_tree.remove(indices[0]);
+                            t->MarkRemoval(nodes[i]);
+                            indices.clear();
+                            squared_distances.clear();
+                            stat_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
+                            cld.points[indices[0]].x = nodes[i]->getPosX() - res[i8]*0.5*res[i8+1];
+                            cld.points[indices[0]].y = nodes[i]->getPosY() - res[i8]*0.5*res[i8+2];
+                            cld.points[indices[0]].z = nodes[i]->getPosZ() - res[i8]*0.5*res[i8+3];
+                        } else if(setting.fusion && res[i8] < setting.fus_min){
+                            // point_type::Point3f searchPoint(nodes[i]->getPosX(), nodes[i]->getPosY(), nodes[i]->getPosZ());
+                            // std::vector<size_t> indices;
+                            // std::vector<float> squared_distances;
+                            // stat_3d_tree.nearestKSearch(searchPoint, 1, indices, squared_distances);
+                            // cldDel[indices[0]] = true;
+                        }
+                    }
+                    t->RemoveMarked();
+                    for(int i = cldDel.size()-1; i>=0; i--) {
+                        if(cldDel[i]) cld.points.erase(cld.points.begin()+i);
                     }
                 }
-                t->RemoveMarked();
-                for(int i = cldDel.size()-1; i>=0; i--) {
-                    if(cldDel[i]) cld.points.erase(cld.points.begin()+i);
-                }
+                stat_3d_tree.reset();
             }
-            stat_3d_tree.reset();
             update(cld);
         } else {
             update(cld);
@@ -215,6 +216,7 @@ namespace IDMP_ros
                 activeSet.insert(*it);
             }
         }
+        if(pointCnt == 0) return 0;
         if(setting.oneshot) {
             for(auto p:addedPts){
                 static_3d_tree.add(p);
@@ -248,7 +250,13 @@ namespace IDMP_ros
                     Eigen::Matrix<double,3,Eigen::Dynamic> trainMat;
                     trainMat.resize(Eigen::NoChange,indices.size());
                     for(int j = 0; j<indices.size(); j++) {
-                        point_type::Point3f cp = dynamic_3d_tree[indices[j]];
+                        point_type::Point3f cp;
+                        if(setting.oneshot) {
+                            cp = static_3d_tree[indices[j]];
+                        } else {
+                            cp = dynamic_3d_tree[indices[j]];
+
+                        }
                         trainMat(0,j) = cp.x;
                         trainMat(1,j) = cp.y;
                         trainMat(2,j) = cp.z;
