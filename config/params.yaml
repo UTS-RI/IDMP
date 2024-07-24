@@ -1,0 +1,19 @@
+idmp_rleng: 1.8
+idmp_tree_hl_min: 0.01
+idmp_tree_hl_max: 32.0
+idmp_tree_hl_clust: 0.5
+idmp_tree_hl_init: 16.0
+idmp_map_scale: 400
+idmp_obs_skip: 10
+idmp_filt_outl: True
+
+idmp_pub_pcl: True
+idmp_world_frame: "base_link"
+idmp_pcl_topic: "/camera/depth_registered/points_filt"
+idmp_caminfo_topic: [['/camera/depth_registered/camera_info', 'camera_rgb_optical_frame']]
+idmp_dynamic: False
+idmp_fusion: True
+
+idmp_dyn_tresh: 0.1
+idmp_fus_min: 0.0005
+idmp_fus_max: 0.005
