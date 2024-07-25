@@ -1,0 +1,33 @@
+input_queue_size: 1
+output_queue_size: 1
+cloud_filter_chain:
+  - name: CropBoxFilter
+    type: point_cloud2_filters/CropBoxFilterPointCloud2
+    params:
+      active: True
+      input_frame: "base_link"
+      output_frame: "base_link"
+      keep_organized: True
+      negative: False
+      min_x: -4
+      max_x: 2
+      min_y: -1.7
+      max_y: 1.7
+      min_z: 0.15
+      max_z: 2
+  - name: VoxelGridFilter
+    type: point_cloud2_filters/VoxelGridFilterPointCloud2
+    params:
+      active: true
+      input_frame: "base_link"
+      output_frame: "rgb_camera_link"
+      leaf_size_x: 0.05
+      leaf_size_y: 0.05
+      leaf_size_z: 0.05
+      min_points_per_voxel: 10
+      downsample_all_data: False
+      filter_field_name: "x"
+      filter_limit_min: -5
+      filter_limit_max: 5
+      negative: False
+

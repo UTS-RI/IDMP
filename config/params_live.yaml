@@ -1,9 +1,9 @@
 idmp_rleng: 1.8
-idmp_tree_hl_min: 0.05
-idmp_tree_hl_max: 3.2
-idmp_tree_hl_clust: 0.1
-idmp_tree_hl_init: 1.6
-idmp_map_scale: 1024
+idmp_tree_hl_min: 0.1
+idmp_tree_hl_max: 6.4
+idmp_tree_hl_clust: 0.2
+idmp_tree_hl_init: 3.2
+idmp_map_scale: 400
 idmp_obs_skip: 10
 idmp_filt_outl: True
 
