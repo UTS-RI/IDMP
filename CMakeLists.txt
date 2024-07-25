@@ -112,6 +112,7 @@ catkin_install_python(PROGRAMS tools/queryTool.py
                         tools/eval/evalTest.py
                         tools/calibPose.py
                         tools/robotProximityViz.py
+                        tools/rssBallSim.py
                         tools/eval/cowCamInfoPub.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
