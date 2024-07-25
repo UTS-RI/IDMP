@@ -1,0 +1,30 @@
+<launch>
+    <include file="$(find azure_kinect_ros_driver)/launch/driver.launch">
+        <arg name="color_enabled"               value="true"/>
+        <arg name="color_resolution"            value="720P"/>
+        <arg name="depth_enabled"               value="true"/>
+        <arg name="depth_mode"                  value="NFOV_UNBINNED"/>
+        <arg name="point_cloud"                 value="true"/>
+        <arg name="rgb_point_cloud"             value="false"/>
+        <arg name="fps"                         value="15"/>
+        <arg name="overwrite_robot_description" value="false" />
+        <!-- <arg name="rgb_processing"                  value="false" />
+        <arg name="debayer_processing"              value="false" />
+        <arg name="ir_processing"                   value="false" />
+        <arg name="depth_processing"                value="true" />
+        <arg name="depth_registered_processing"     value="false" />
+        <arg name="disparity_processing"            value="false" />
+        <arg name="disparity_registered_processing" value="false" /> -->
+    </include>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="k4a_link" args="0.0981157264874497 1.0430849589066893 2.3342818063183954 0.5873296780310319 0.6048736865134295 -0.4046239736287108 0.3541907856403527 rgb_camera_link base_link" />
+    <node name="robot_filter" pkg="sensor_filters" type="pointcloud2_filter_chain" launch-prefix="bash -c 'sleep 1; $0 $@' " output="screen">
+        <rosparam command="load" file="$(find idmp_ros)/config/kinectFilterChain_soccer.yaml" />
+        <remap from="~input" to="/points2" />
+        <remap from="~output" to="points_filt" />
+    </node>
+
+    <rosparam file="$(find idmp_ros)/config/params_live.yaml" />
+    <node pkg="idmp_ros" type="idmp" name="idmp_ros" output="screen" respawn="true"/>
+
+</launch>

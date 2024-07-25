@@ -36,8 +36,8 @@ class ArucoDetector:
         self.dist_coeffs = None
 
         # Subscribers
-        self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.image_callback)
-        self.camera_info_sub = rospy.Subscriber("/camera/color/camera_info", CameraInfo, self.camera_info_callback)
+        self.image_sub = rospy.Subscriber("/rgb/image_raw", Image, self.image_callback)
+        self.camera_info_sub = rospy.Subscriber("/rgb/camera_info", CameraInfo, self.camera_info_callback)
         #NOTE: Adjust these two parameters for your printed marker
         self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
         self.marker_length = 0.100 #width of black square in m
