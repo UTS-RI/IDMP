@@ -21,7 +21,7 @@ We present an interactive distance field mapping and planning (IDMP) framework t
 - OpenMP (for multithreading. optional but strongly recommended)
 - sensor-filters (`sudo apt install ros-noetic-sensor-filters`)
 - point-cloud2-filters (`sudo apt install ros-noetic-point-cloud2-filters`)
-- robot-body-filter (optional for removing the robot from the pointcloud. `sudo apt install ros-noetic-point-cloud2-filters`)
+- robot-body-filter (optional for removing the robot from the pointcloud.) ()`sudo apt install ros-noetic-point-cloud2-filters`)
 - Camera specific ros driver
     - [Azure kinect](https://github.com/microsoft/Azure_Kinect_ROS_Driver)
     - [Intel Realsense](https://github.com/IntelRealSense/realsense-ros)
@@ -46,7 +46,7 @@ We provide a few launch files to get started:
 
 - realsense.launch: Launches the realsense driver, publishes the camera pose as TF and runs IDMP
 - zed.launch: Launches the zed driver, publishes the camera pose as TF and runs IDMP
-- kinect_UR5e.launch: Launches the Azure Kinect driver, an inoffical UR5e Ros driver, a filter node that filters the robot points and IDMP
+- kinect_UR5e.launch: Launches the Azure Kinect driver, an inoffical UR5e Ros driver, a filter node that filters the robot points and IDMP. Note that we use our own custom Universal Robots Ros Driver and not the official one. 
 
 You can run these with `roslaunch idmp_ros {name}.launch`.
 
@@ -73,13 +73,27 @@ Running the dataset with IDMP:
 - Play the rosbag
 - To visualize the distance field and gradients, run the query tool `rosrun idmp_ros queryTool.py`
 
+### Using multiple cameras
+
+Idmp supports the use of multiple cameras to capture a bigger scene. For this, each camera has to publish its pose as TF and its intrinsic parameters as CameraInfo message. The pointclouds of the cameras need to be merged into one pointcloud (preferably in the base frame), before being fed into IDMP.
+
+- Merge pointcloud of all cameras. (For example using [something like this](https://github.com/aseligmann/pointcloud_concatenate))
+- set the merged pointcloud topic as input for IDMP
+- for each camera, add the cameraInfo topic and the TF frame name to the list in idmp_caminfo_topic.
+- idmp_caminfo_topic for two cameras might look like this: 
+```
+idmp_caminfo_topic: 
+    - ["/camera_1/depth/camera_info", "camera_1_depth_optical_frame"]
+    - ["/camera_2/depth/camera_info", "camera_2_depth_optical_frame"]
+```
+
 ### Tools
 
 We provide a set of tools to interact with IDMP for testing and demonstration purposes. You can run these with `rosrun idmp_ros {tool}.py
 
 - calibPose: This can be used to calibrate the camera pose using an aruco marker. Adjust the topics and marker parameters for your setting and run the script. Make sure the determined pose is aligned properly and copy the output into your launchfile to replace the transform.
 - queryTool: This creates an interactive marker and queries a distance field slice. It is then published and can be visualized in RVIZ. You can adjust the slice properties and make it move by setting the corresponding variables in the file.
-- datasetTFPublisher: This publishes the pose topic found in the cow and lady dataset as TF
+- cowAndLadyInfoPub: This publishes the pose topic found in the cow and lady dataset as TF and the cameraInfo for the kinect
 - evalTool: This is similar to the queryTool but it can load a groundtruth pointcloud and calculate real time metrics like RMSE
 - speedMove: This is a basic implementation of obstacle avoidance with repulsive vectors by querying the distance field. This needs a robot driver to run and sends velocity commands to control the robot.
 - The eval folder contains some tools used to evaluate our results for the publication
@@ -96,16 +110,11 @@ All IDMP parameters can be found as yaml files in the config folder. These need 
 |idmp_tree_hl_clust|Octree half-length of cluster|0.05|
 |idmp_tree_hl_init|Initial octree half-length|1.6|
 |idmp_map_scale|Kernel map scale|1024|
-|idmp_obs_skip|Skip factor for depth filtering (Depth input only)|10|
 |idmp_filt_outl|Enables outlier filtering for input|True|
-|idmp_depth_input|Use depth image as input|False|
-|idmp_dual_cam|Use dual camera setup (not implemented yet)|False|
 |idmp_pub_pcl|Publish the pointcloud of the octree for visualization|True|
-|idmp_depth_topic|Topic of depth input|"/camera_1/depth/image_raw"|
-|idmp_dual_depth_topic|Topic of secondary depth input|""|
 |idmp_world_frame|Reference frame (needs to be published as TF)|"base_link"|
 |idmp_pcl_topic|Topic of input pointcloud|"/points_filt"|
-|idmp_caminfo_topic|Topic of cameraInfo with intrinsic parameters of the depth sensor|"/depth/camera_info"|
+|idmp_caminfo_topic|List of cameraInfo and tf pose pairs for every sensor|" - ["/depth/camera_info", "depth_camera_link"]"|
 |idmp_dynamic|Enables dynamic object mode|True|
 |idmp_fusion|Enables local fusion|False|
 |idmp_dyn_tresh|Dynamic movement treshold|0.08|

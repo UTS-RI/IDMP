@@ -15,18 +15,9 @@
         <arg name="rgb_point_cloud"             value="false"/>
         <arg name="fps"                         value="15"/>
         <arg name="overwrite_robot_description" value="false" />
-        <!-- <arg name="rgb_processing"                  value="false" />
-        <arg name="debayer_processing"              value="false" />
-        <arg name="ir_processing"                   value="false" />
-        <arg name="depth_processing"                value="true" />
-        <arg name="depth_registered_processing"     value="false" />
-        <arg name="disparity_processing"            value="false" />
-        <arg name="disparity_registered_processing" value="false" /> -->
     </include>
-    <include file="$(find aruco-tools)/launch/publishTags.launch">
-      <arg name="yaml_file"         value="$(find aruco-tools)/config/poses.yaml" />
-    </include>
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="k4a_link" args="-0.18408162 -0.59068343 1.85925519 -0.00450478 0.9378159 -0.34707718 0.0042993 rgb_camera_link base_link" /> -->
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="k4a_link" args="-0.18408162 -0.59068343 1.85925519 -0.00450478 0.9378159 -0.34707718 0.0042993 rgb_camera_link base_link" />
     <node name="robot_filter" pkg="sensor_filters" type="pointcloud2_filter_chain" launch-prefix="bash -c 'sleep 1; $0 $@' " output="screen">
         <rosparam command="load" file="$(find idmp_ros)/config/kinectFilterChain.yaml" />
         <remap from="~input" to="/points2" />
@@ -34,15 +25,4 @@
     </node>
     <rosparam file="$(find idmp_ros)/config/params_live.yaml" />
     <node pkg="idmp_ros" type="idmp" name="idmp_ros" output="screen" respawn="true"/>
-<!-- 
-[[   -0.999922,  -0.0114337,  -0.0049369, -0.181642],
-[-0.00546492,    0.759034,   -0.651028, 1.65777],
-[0.0111909,    -0.65095,   -0.759038, 1.0288],
-[0,0,0,1]]
-inv:
-[[-0.99992289, -0.00546494,  0.01119094, -0.18408162],
-[-0.01143368,  0.75903447, -0.65095061, -0.59068343],
-[-0.00493689, -0.65102755, -0.75903771,  1.85925519],
-[ 0.        ,  0.        ,  0.        ,  1.        ]]
- -->
 </launch>
