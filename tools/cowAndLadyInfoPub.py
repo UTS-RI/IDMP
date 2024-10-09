@@ -25,23 +25,47 @@ from tf2_msgs.msg import TFMessage
 import numpy as np
 import tf2_ros
 import ros_numpy
+from sensor_msgs.msg import CameraInfo
 
-class TFconverter:
-    def __init__(self):
-        self.sub_msg = rospy.Subscriber("/kinect/vrpn_client/estimated_transform", TransformStamped, self.my_callback)
 
-    def my_callback(self, data):
-        # self.pub_tf.publish(TFMessage([data]))  # works but no 'nicely readable'
 
-        # clearer
-        br = tf2_ros.TransformBroadcaster()
+def pose_cb(data):
+    br = tf2_ros.TransformBroadcaster()
+    data.header.frame_id = "base_link"
+    br.sendTransform(data)
 
-        data.header.frame_id = "base_link"
-        br.sendTransform(data)
+def create_camInfo():
+    camera_info_msg = CameraInfo()
+    
+    # Standard Kinect v1 calibration parameters
+    camera_info_msg.height = 480
+    camera_info_msg.width = 640
+    camera_info_msg.distortion_model = "plumb_bob"
+    
+    # Distortion coefficients: [k1, k2, p1, p2, k3]
+    camera_info_msg.D = [-0.203, 0.169, 0, 0, 0]
+    
+    # Intrinsic camera matrix (K)
+    camera_info_msg.K = [525.0, 0.0, 319.5,
+                         0.0, 525.0, 239.5,
+                         0.0, 0.0, 1.0]
+    
+    # Rectification matrix (R)
+    camera_info_msg.R = [1.0, 0.0, 0.0,
+                         0.0, 1.0, 0.0,
+                         0.0, 0.0, 1.0]
+    
+    # Projection matrix (P)
+    camera_info_msg.P = [525.0, 0.0, 319.5, 0.0,
+                         0.0, 525.0, 239.5, 0.0,
+                         0.0, 0.0, 1.0, 0.0]
+    return camera_info_msg
 
 if __name__ == '__main__':
-    rospy.init_node('datasetTFPub')
+    rospy.init_node('cowAndLadyInfoPub')
+    # Transform from pose message to tf
     sbr = tf2_ros.static_transform_broadcaster.StaticTransformBroadcaster()
+    # Transform between vicon and kinect
     sys2cam = TransformStamped()
     sys2cam.header.frame_id = "kinect"
     sys2cam.header.stamp = rospy.Time.now()
@@ -52,5 +76,13 @@ if __name__ == '__main__':
     sys2cam.transform = ros_numpy.msgify(Transform, mat)
     sys2cam.child_frame_id = "camera_rgb_optical_frame"
     sbr.sendTransform(sys2cam)
-    tfb = TFconverter()
-    rospy.spin()
+    # Subscriber for pose
+    pose_sub = rospy.Subscriber("/kinect/vrpn_client/estimated_transform", TransformStamped, pose_cb)
+    # pubish camera info for kinect
+    camInfo_pub = rospy.Publisher('/camera/depth_registered/camera_info', CameraInfo, queue_size=10)
+    camInfo_msg = create_camInfo()
+    
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        camInfo_pub.publish(camInfo_msg)
+        rate.sleep()

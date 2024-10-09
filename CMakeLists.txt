@@ -106,7 +106,7 @@ add_dependencies(
 catkin_install_python(PROGRAMS tools/queryTool.py
                         tools/evalTool.py
                         tools/speedMove.py
-                        tools/datasetTFPublisher.py
+                        tools/cowAndLadyInfoPub.py
                         tools/eval/dumpField.py
                         tools/eval/runTests.py
                         tools/eval/evalTest.py

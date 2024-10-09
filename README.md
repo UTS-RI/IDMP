@@ -62,6 +62,17 @@ Keep in mind that it needs the parameters of the config file in the parameter se
 
 These config also contains the topics of the input pointcloud, the camera intrinsics and the reference frame. Make sure to adjust these to your setup.
 
+### Running Benchmark Datasets
+
+The Datasets can be found here: 
+- [Cow and Lady](https://projects.asl.ethz.ch/datasets/doku.php?id=iros2017)
+- [Dynamic Ball](https://drive.google.com/file/d/1pLu1bw5k_bogKoMEMdHErIggIJFj3JQt/view)
+
+Running the dataset with IDMP:
+- Launch the corresponding launch file (run_cow_and_lady.launch or run_dynamic_ball.launch)-
+- Play the rosbag
+- To visualize the distance field and gradients, run the query tool `rosrun idmp_ros queryTool.py`
+
 ### Tools
 
 We provide a set of tools to interact with IDMP for testing and demonstration purposes. You can run these with `rosrun idmp_ros {tool}.py

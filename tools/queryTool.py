@@ -119,11 +119,11 @@ def process_feedback(feedback):
     new_data = True
 
 def numpy_to_msg(arr, intensity, frame):
-    data = np.zeros(len(arr), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32),('Intensity', np.float32)])
+    data = np.zeros(len(arr), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32),('intensity', np.float32)])
     data['x'] = arr[:, 0]
     data['y'] = arr[:, 1]
     data['z'] = arr[:, 2]
-    data['Intensity'] = intensity
+    data['intensity'] = intensity
     return array_to_pointcloud2(data, stamp=rospy.Time.now(), frame_id=frame)
 
 def create_arrow(scale, start, end, idnum, color=None):
@@ -203,7 +203,7 @@ if __name__=="__main__":
     
     hMove = False if not doubleSlice else False
 
-    vMove = True#(not hMove) if not doubleSlice else False
+    vMove = False#(not hMove) if not doubleSlice else False
 
     wave = False
 
